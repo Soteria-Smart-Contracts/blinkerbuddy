@@ -234,6 +234,8 @@ function startCountdown(plot, index) {
             } else if (values[i] === 'Ready') { // This is the "3"
                 playBeep(698.46, 150); // Medium pitch for 'Ready' (F5)
             }
+            //what is 200 and 150 in the above code?
+            // 
             i++;
         } else {
             clearInterval(interval);
