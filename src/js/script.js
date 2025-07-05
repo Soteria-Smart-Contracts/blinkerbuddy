@@ -39,14 +39,14 @@ function playGnomeMelody() {
     const context = getAudioContext();
     if (!context) return;
 
-    // New 6-note melody: C4, D4, E4, F4, G4, A4
+    // Melodic sequence: C4, E4, G4, F4, A4, D4
     const notes = [
         { freq: 261.63, duration: 150, delay: 0 },    // C4
-        { freq: 293.66, duration: 150, delay: 150 },  // D4
-        { freq: 329.63, duration: 150, delay: 300 },  // E4
+        { freq: 329.63, duration: 150, delay: 150 },  // E4
+        { freq: 392.00, duration: 150, delay: 300 },  // G4
         { freq: 349.23, duration: 150, delay: 450 },  // F4
-        { freq: 392.00, duration: 150, delay: 600 },  // G4
-        { freq: 440.00, duration: 200, delay: 750 }   // A4
+        { freq: 440.00, duration: 200, delay: 600 },  // A4
+        { freq: 293.66, duration: 200, delay: 800 }   // D4
     ];
 
     notes.forEach(note => {
