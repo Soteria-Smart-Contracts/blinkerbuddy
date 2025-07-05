@@ -5,6 +5,48 @@ let highScore = 0;
 let isBlinking = false;
 let plantedTreesCount = 0;
 
+// Web Audio API setup
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+}
+
+function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
+    const context = getAudioContext();
+    if (!context) return; // AudioContext not supported or failed to initialize
+
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+
+    oscillator.type = 'sine'; // sine wave is a simple beep
+    oscillator.frequency.setValueAtTime(frequency, context.currentTime); // value in hertz
+
+    gainNode.gain.setValueAtTime(volume, context.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + duration / 1000);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+
+    oscillator.start(context.currentTime);
+    oscillator.stop(context.currentTime + duration / 1000);
+}
+
+function playGnomeMelody() {
+    const context = getAudioContext();
+    if (!context) return;
+
+    const now = context.currentTime;
+    // Simple ascending melody: C, E, G
+    playBeep(261.63, 150); // C4
+    setTimeout(() => playBeep(329.63, 150), 150); // E4
+    setTimeout(() => playBeep(392.00, 200), 300); // G4
+}
+
+
 // Load saved states from storage
 chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ treeStates: ts, totalBlinkersToday: tb, highScore: hs }) => {
     treeStates = ts || [];
@@ -15,6 +57,14 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ t
     checknewday(); // Check if it's a new day to reset blink count
 });
 
+//fix the following console command for testing purposes
+//chrome.storage.local.get([highScore])
+
+//fixed command:
+//chrome.storage.local.get(['highScore'], ({ highScore }) => console.log(highScore));
+
+//now to set it to 31
+//chrome.storage.local.set({ highScore: 31 }, () => console.log('High score set to 31'));
 
 // Update the plots to reflect the current state of trees
 function updatePlots() {
@@ -63,9 +113,23 @@ function startCountdown(plot, index) {
     overlay.style.display = 'flex';
     text.textContent = '';
 
+    // Ensure AudioContext is initialized by user gesture (click)
+    getAudioContext();
+
     const interval = setInterval(() => {
         if (i < values.length) {
-            text.textContent = values[i++];
+            text.textContent = values[i];
+            // Play beep for "Go" (which corresponds to "1" if we map Ready, Set, Go to 3, 2, 1)
+            // For a 3, 2, 1 countdown, we'd need to adjust the `values` array or logic here.
+            // Assuming "Go" is the last step before timer starts.
+            if (values[i] === 'Go') { // This is the "1" in a typical 3-2-1
+                playBeep(783.99, 150); // Higher pitch for '1' (G5)
+            } else if (values[i] === 'Set') { // This is the "2"
+                playBeep(659.25, 150); // Medium pitch for '2' (E5)
+            } else if (values[i] === 'Ready') { // This is the "3"
+                playBeep(523.25, 150); // Lower pitch for '3' (C5)
+            }
+            i++;
         } else {
             clearInterval(interval);
             overlay.style.display = 'none';
@@ -150,6 +214,7 @@ function startBlinkerAnimation(plot) {
 function checkAllTreesFilled() {
     if (treeStates.length === plots.length) {
         displayGnome();
+        playGnomeMelody(); // Play melody when gnome is displayed
     }
 }
 
