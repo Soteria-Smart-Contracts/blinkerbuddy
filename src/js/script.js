@@ -271,15 +271,15 @@ function startTimer(plot, index) {
         timerElement.textContent = `${remainingTime}s`;
 
         if (remainingTime === 2 && !soundplayed2sec) {
-            playBeep(1000, 200, 0.7); // Medium pitch for 2 seconds
+            playBeep(500, 200, 0.5); // Medium pitch for 'Ready' and 'Set'
             soundplayed2sec = true;
         }
         if (remainingTime === 1 && !soundplayed1sec) {
-            playBeep(1500, 200, 0.8); // Higher pitch for 1 second
+            playBeep(500, 200, 0.5); // Medium pitch for 'Ready' and 'Set'
             soundplayed1sec = true;
         }
         if (remainingTime === 0 && !soundplayed0sec) {
-            playBeep(2000, 200, 1); // Highest pitch for 0 seconds
+            playBeep(2000, 400, 1); // High pitch for 'Go' with increased volume
             soundplayed0sec = true;
         }
 
