@@ -271,7 +271,17 @@ function startTimer(plot, index) {
         timerElement.textContent = `${remainingTime}s`;
 
         if (remainingTime === 2 && !soundplayed2sec) {
-            
+            playBeep(1000, 200, 0.7); // Medium pitch for 2 seconds
+            soundplayed2sec = true;
+        }
+        if (remainingTime === 1 && !soundplayed1sec) {
+            playBeep(1500, 200, 0.8); // Higher pitch for 1 second
+            soundplayed1sec = true;
+        }
+        if (remainingTime === 0 && !soundplayed0sec) {
+            playBeep(2000, 200, 1); // Highest pitch for 0 seconds
+            soundplayed0sec = true;
+        }
 
         if (elapsed >= 8) {
             clearInterval(interval);
