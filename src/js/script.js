@@ -228,7 +228,7 @@ function startCountdown(plot, index) {
             // For a 3, 2, 1 countdown, we'd need to adjust the `values` array or logic here.
             // Assuming "Go" is the last step before timer starts.
             if (values[i] === 'Go') { // Final tone, louder and higher pitch
-                playBeep(800, 300, 0.8); // High pitch for 'Go' with increased volume
+                playBeep(2500, 300, 0.8); // High pitch for 'Go' with increased volume
             } else { // Same tone for 'Ready' and 'Set'
                 playBeep(500, 200, 0.5); // Medium pitch for 'Ready' and 'Set' with moderate volume
             }
