@@ -60,8 +60,8 @@ function playGnomeMelody() {
 
     // Play the melody twice in the same period of time
     notes.forEach(note => {
-        setTimeout(() => playBeep(note.freq, note.duration, 0.3), note.delay); // First sequence
-        setTimeout(() => playBeep(note.freq, note.duration, 0.3), note.delay + 2500); // Second sequence starts halfway through the first
+        setTimeout(() => playBeep(note.freq, note.duration, 1), note.delay); // First sequence
+        setTimeout(() => playBeep(note.freq, note.duration, 1), note.delay + 2500); // Second sequence starts halfway through the first
     });
 }
 //make consoel command to play this note only        { freq: 261.63, duration: 150, delay: 0 },    // C4
