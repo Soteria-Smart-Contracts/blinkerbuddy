@@ -103,6 +103,7 @@ function playSirenSound(duration = 2000) {
     }
 
     performSweep(context.currentTime); // Initial sweep
+    //simultaniously play blinkeralert.mp
 
     sirenSweepInterval = setInterval(() => {
         cycles++;
