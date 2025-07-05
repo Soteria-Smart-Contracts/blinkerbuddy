@@ -64,6 +64,7 @@ function playGnomeMelody() {
         setTimeout(() => playBeep(note.freq, note.duration, 0.3), note.delay + 2500); // Second sequence starts halfway through the first
     });
 }
+//make consoel command to play this note only        { freq: 261.63, duration: 150, delay: 0 },    // C4
 
 let sirenOscillator = null;
 let sirenGainNode = null; // Keep track of the gain node for the siren
