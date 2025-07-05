@@ -227,12 +227,10 @@ function startCountdown(plot, index) {
             // Play beep for "Go" (which corresponds to "1" if we map Ready, Set, Go to 3, 2, 1)
             // For a 3, 2, 1 countdown, we'd need to adjust the `values` array or logic here.
             // Assuming "Go" is the last step before timer starts.
-            if (values[i] === 'Go') { // This is the "1" in a typical 3-2-1
-                playBeep(400, 200, 0.65); // Low pitch for 'Go' with increased volume
-            } else if (values[i] === 'Set') { // This is the "2"
-                playBeep(300, 150, 0.4); // Lower pitch for 'Set' with medium volume
-            } else if (values[i] === 'Ready') { // This is the "3"
-                playBeep(200, 150, 0.3); // Lowest pitch for 'Ready' with lower volume
+            if (values[i] === 'Go') { // Final tone, louder and higher pitch
+                playBeep(800, 300, 0.8); // High pitch for 'Go' with increased volume
+            } else { // Same tone for 'Ready' and 'Set'
+                playBeep(500, 200, 0.5); // Medium pitch for 'Ready' and 'Set' with moderate volume
             }
             i++;
         } else {
