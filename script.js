@@ -22,7 +22,7 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ t
 //chrome.storage.local.get(['highScore'], ({ highScore }) => console.log(highScore));
 
 //now to set it to 31
-
+//chrome.storage.local.set({ highScore: 31 }, () => console.log('High score set to 31'));
 
 // Update the plots to reflect the current state of trees
 function updatePlots() {
