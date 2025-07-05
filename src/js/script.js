@@ -230,9 +230,9 @@ function startCountdown(plot, index) {
             if (values[i] === 'Go') { // This is the "1" in a typical 3-2-1
                 playBeep(1200, 200); // Very high pitch for 'Go' (race start sound)
             } else if (values[i] === 'Set') { // This is the "2"
-                playBeep(880, 150); // Higher pitch for 'Set' (A5)
+                playBeep(1200, 150); // Higher pitch for 'Set' (A5)
             } else if (values[i] === 'Ready') { // This is the "3"
-                playBeep(698.46, 150); // Medium pitch for 'Ready' (F5)
+                playBeep(880.46, 150); // Medium pitch for 'Ready' (F5)
             }
             i++;
         } else {
