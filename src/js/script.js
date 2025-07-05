@@ -39,91 +39,101 @@ function playGnomeMelody() {
     const context = getAudioContext();
     if (!context) return;
 
-    // Extended 6-tone gnome melody: C4, E4, G4, C5, E5, G5
+    // New 6-note melody: C4, D4, E4, F4, G4, A4
     const notes = [
         { freq: 261.63, duration: 150, delay: 0 },    // C4
-        { freq: 329.63, duration: 150, delay: 150 },  // E4
-        { freq: 392.00, duration: 150, delay: 300 },  // G4
-        { freq: 523.25, duration: 150, delay: 450 },  // C5
-        { freq: 659.25, duration: 150, delay: 600 },  // E5
-        { freq: 783.99, duration: 200, delay: 750 }   // G5
+        { freq: 293.66, duration: 150, delay: 150 },  // D4
+        { freq: 329.63, duration: 150, delay: 300 },  // E4
+        { freq: 349.23, duration: 150, delay: 450 },  // F4
+        { freq: 392.00, duration: 150, delay: 600 },  // G4
+        { freq: 440.00, duration: 200, delay: 750 }   // A4
     ];
 
     notes.forEach(note => {
-        setTimeout(() => playBeep(note.freq, note.duration), note.delay);
+        setTimeout(() => playBeep(note.freq, note.duration, 0.2), note.delay); // Reduced volume for melody
     });
 }
 
-let sirenInterval = null;
 let sirenOscillator = null;
+let sirenGainNode = null; // Keep track of the gain node for the siren
+let sirenSweepInterval = null;
 
 function playSirenSound(duration = 2000) {
     const context = getAudioContext();
     if (!context) return;
 
-    if (sirenOscillator) { // Stop any existing siren
-        sirenOscillator.stop();
-        sirenOscillator.disconnect();
-    }
-    if (sirenInterval) {
-        clearInterval(sirenInterval);
-    }
+    stopSirenSound(); // Clear any existing siren
 
     sirenOscillator = context.createOscillator();
-    const gainNode = context.createGain();
+    sirenGainNode = context.createGain(); // Use the dedicated sirenGainNode
 
-    sirenOscillator.type = 'sine';
-    gainNode.gain.setValueAtTime(0.2, context.currentTime); // Siren volume
-    sirenOscillator.connect(gainNode);
-    gainNode.connect(context.destination);
+    sirenOscillator.type = 'sine'; // Using sine for a smoother sweep, can change to 'sawtooth' or 'square'
+    sirenGainNode.gain.setValueAtTime(0.15, context.currentTime); // Siren volume (a bit lower)
 
-    let highPitch = true;
-    sirenOscillator.frequency.setValueAtTime(highPitch ? 1200 : 800, context.currentTime);
+    sirenOscillator.connect(sirenGainNode);
+    sirenGainNode.connect(context.destination);
+
+    const baseFreq = 600;
+    const peakFreq = 1000;
+    const sweepDurationSeconds = 0.2; // How long one full up-down sweep takes
+
+    sirenOscillator.frequency.setValueAtTime(baseFreq, context.currentTime);
     sirenOscillator.start(context.currentTime);
 
-    let startTime = context.currentTime;
-    sirenInterval = setInterval(() => {
-        if (context.currentTime - startTime >= duration / 1000) {
-            stopSirenSound();
-            return;
-        }
-        highPitch = !highPitch;
-        sirenOscillator.frequency.setValueAtTime(highPitch ? 1200 : 800, context.currentTime);
-    }, 150); // Switch pitch every 150ms
+    let cycles = 0;
+    const totalCycles = duration / (sweepDurationSeconds * 1000);
 
-    // Backup stop based on duration
+    function performSweep(startTime) {
+        sirenOscillator.frequency.linearRampToValueAtTime(peakFreq, startTime + sweepDurationSeconds / 2);
+        sirenOscillator.frequency.linearRampToValueAtTime(baseFreq, startTime + sweepDurationSeconds);
+    }
+
+    performSweep(context.currentTime); // Initial sweep
+
+    sirenSweepInterval = setInterval(() => {
+        cycles++;
+        if (cycles >= totalCycles) {
+            stopSirenSound();
+        } else {
+            performSweep(context.currentTime);
+        }
+    }, sweepDurationSeconds * 1000);
+
+
+    // Backup stop based on total duration
     setTimeout(stopSirenSound, duration);
 }
 
 function stopSirenSound() {
-    if (sirenInterval) {
-        clearInterval(sirenInterval);
-        sirenInterval = null;
+    if (sirenSweepInterval) {
+        clearInterval(sirenSweepInterval);
+        sirenSweepInterval = null;
     }
     if (sirenOscillator) {
         const context = getAudioContext();
-        if (context) { // Ensure context is available for timing
-             // Fade out gain to prevent click
-            const gainNode = sirenOscillator.gain || context.createGain(); // Assuming gainNode is accessible or recreate
-             if (sirenOscillator.connected) { // Check if connected before trying to read gain
-                gainNode.gain.setValueAtTime(gainNode.gain.value, context.currentTime); // Hold current gain
-                gainNode.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.05);
-                setTimeout(() => {
-                    if(sirenOscillator) { // Check again, might have been cleared
-                        sirenOscillator.stop(context.currentTime + 0.05);
-                        sirenOscillator.disconnect();
-                        sirenOscillator = null;
-                    }
-                }, 50);
-             } else { // If not connected or gain not found, just stop
-                sirenOscillator.stop(context.currentTime);
-                sirenOscillator.disconnect();
-                sirenOscillator = null;
-             }
-        } else if (sirenOscillator) { // Fallback if context somehow lost
+        if (context && sirenGainNode) {
+            // Fade out gain to prevent click
+            sirenGainNode.gain.setValueAtTime(sirenGainNode.gain.value, context.currentTime);
+            sirenGainNode.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.05);
+            setTimeout(() => {
+                if (sirenOscillator) {
+                    sirenOscillator.stop(context.currentTime + 0.05);
+                    sirenOscillator.disconnect();
+                    sirenOscillator = null;
+                }
+                if (sirenGainNode) {
+                    sirenGainNode.disconnect(); // Disconnect the gain node too
+                    sirenGainNode = null;
+                }
+            }, 55); // Ensure this runs after gain ramp
+        } else if (sirenOscillator) { // Fallback if context or gainNode somehow lost
             sirenOscillator.stop();
             sirenOscillator.disconnect();
             sirenOscillator = null;
+        }
+        if (sirenGainNode && !context) { // If only gainNode exists without context, try to disconnect
+             sirenGainNode.disconnect();
+             sirenGainNode = null;
         }
     }
 }
@@ -359,7 +369,7 @@ function displayGnome() {
     overlay.style.flexDirection = 'column';
 
     const img = document.createElement('img');
-    img.src = 'src/images/gnome.jpg';
+    img.src = 'gnome.jpg';
     img.style.width = '175px';
     img.style.height = 'auto';
     img.style.margin = '0 auto 10px';
