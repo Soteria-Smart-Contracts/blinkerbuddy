@@ -39,18 +39,20 @@ function playGnomeMelody() {
     const context = getAudioContext();
     if (!context) return;
 
-    // Melodic sequence: C4, E4, G4, F4, A4, D4
+    // Melodic sequence with smoother transitions and longer durations
     const notes = [
-        { freq: 261.63, duration: 150, delay: 0 },    // C4
-        { freq: 329.63, duration: 150, delay: 150 },  // E4
-        { freq: 392.00, duration: 150, delay: 300 },  // G4
-        { freq: 349.23, duration: 150, delay: 450 },  // F4
-        { freq: 440.00, duration: 200, delay: 600 },  // A4
-        { freq: 293.66, duration: 200, delay: 800 }   // D4
+        { freq: 261.63, duration: 300, delay: 0 },    // C4
+        { freq: 293.66, duration: 300, delay: 300 },  // D4
+        { freq: 329.63, duration: 300, delay: 600 },  // E4
+        { freq: 349.23, duration: 300, delay: 900 },  // F4
+        { freq: 392.00, duration: 400, delay: 1200 }, // G4
+        { freq: 440.00, duration: 400, delay: 1600 }, // A4
+        { freq: 493.88, duration: 400, delay: 2000 }, // B4
+        { freq: 523.25, duration: 500, delay: 2400 }  // C5
     ];
 
     notes.forEach(note => {
-        setTimeout(() => playBeep(note.freq, note.duration, 0.2), note.delay); // Reduced volume for melody
+        setTimeout(() => playBeep(note.freq, note.duration, 0.3), note.delay); // Slightly increased volume for melody
     });
 }
 
