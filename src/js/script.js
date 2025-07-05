@@ -66,6 +66,7 @@ function playGnomeMelody() {
 }
 //make consoel command to play this note only        { freq: 261.63, duration: 150, delay: 0 },    // C4
 // command:
+// playBeep(261.63, 150, 0.3); // Play C4 note for 150ms at volume 0.3
 
 let sirenOscillator = null;
 let sirenGainNode = null; // Keep track of the gain node for the siren
