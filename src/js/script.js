@@ -268,13 +268,7 @@ function startTimer(plot, index) {
         timerElement.textContent = `${remainingTime}s`;
 
         // New audio cues for the last 3 seconds
-        if (remainingTime === 3 || remainingTime === 2 || remainingTime === 1) { // Replay the same cue as the countdown
-            playBeep(500, 200, 0.5); // Medium pitch for countdown cues
-        }
-
-        if (remainingTime === 0) { // Play a big sound right before the blinker animation
-            playBeep(1500, 400, 1); // High pitch and louder sound to signal the end
-        }
+        
 
         if (elapsed >= 8) {
             clearInterval(interval);
