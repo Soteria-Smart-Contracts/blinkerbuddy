@@ -21,6 +21,9 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ t
 //fixed command: 
 //chrome.storage.local.get(['highScore'], ({ highScore }) => console.log(highScore));
 
+//now to set it to 31
+
+
 // Update the plots to reflect the current state of trees
 function updatePlots() {
     plantedTreesCount = 0; // Reset plantedTreesCount
