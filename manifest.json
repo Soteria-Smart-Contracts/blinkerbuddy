@@ -1,0 +1,17 @@
+{
+    "manifest_version": 3,
+    "name": "Blinker Game",
+    "version": "1.0",
+    "description": "A game to encourage blinking.",
+    "permissions": ["storage"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+      }
+    },
+    "icons": {
+      }
+  }
