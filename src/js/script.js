@@ -41,25 +41,27 @@ function playGnomeMelody() {
 
     // Melodic sequence with smoother transitions and longer durations
     const notes = [
-        { freq: 261.63, duration: 300, delay: 0 },    // C4
-        { freq: 293.66, duration: 300, delay: 300 },  // D4
-        { freq: 329.63, duration: 300, delay: 600 },  // E4
-        { freq: 349.23, duration: 300, delay: 900 },  // F4
-        { freq: 392.00, duration: 400, delay: 1200 }, // G4
-        { freq: 440.00, duration: 400, delay: 1600 }, // A4
-        { freq: 493.88, duration: 400, delay: 2000 }, // B4
-        { freq: 523.25, duration: 500, delay: 2400 }, // C5
-        { freq: 493.88, duration: 400, delay: 2900 }, // B4
-        { freq: 440.00, duration: 400, delay: 3300 }, // A4
-        { freq: 392.00, duration: 400, delay: 3700 }, // G4
-        { freq: 349.23, duration: 300, delay: 4100 }, // F4
-        { freq: 329.63, duration: 300, delay: 4400 }, // E4
-        { freq: 293.66, duration: 300, delay: 4700 }, // D4
-        { freq: 261.63, duration: 300, delay: 5000 }  // C4
+        { freq: 261.63, duration: 150, delay: 0 },    // C4
+        { freq: 293.66, duration: 150, delay: 150 },  // D4
+        { freq: 329.63, duration: 150, delay: 300 },  // E4
+        { freq: 349.23, duration: 150, delay: 450 },  // F4
+        { freq: 392.00, duration: 200, delay: 600 },  // G4
+        { freq: 440.00, duration: 200, delay: 800 },  // A4
+        { freq: 493.88, duration: 200, delay: 1000 }, // B4
+        { freq: 523.25, duration: 250, delay: 1200 }, // C5
+        { freq: 493.88, duration: 200, delay: 1450 }, // B4
+        { freq: 440.00, duration: 200, delay: 1650 }, // A4
+        { freq: 392.00, duration: 200, delay: 1850 }, // G4
+        { freq: 349.23, duration: 150, delay: 2050 }, // F4
+        { freq: 329.63, duration: 150, delay: 2200 }, // E4
+        { freq: 293.66, duration: 150, delay: 2350 }, // D4
+        { freq: 261.63, duration: 150, delay: 2500 }  // C4
     ];
 
+    // Play the melody twice in the same period of time
     notes.forEach(note => {
-        setTimeout(() => playBeep(note.freq, note.duration, 0.3), note.delay); // Slightly increased volume for melody
+        setTimeout(() => playBeep(note.freq, note.duration, 0.3), note.delay); // First sequence
+        setTimeout(() => playBeep(note.freq, note.duration, 0.3), note.delay + 2500); // Second sequence starts halfway through the first
     });
 }
 
