@@ -271,7 +271,6 @@ function startTimer(plot, index) {
         timerElement.textContent = `${remainingTime}s`;
 
         // New audio cues for the last 3 seconds
-        
 
         if (elapsed >= 8) {
             clearInterval(interval);
