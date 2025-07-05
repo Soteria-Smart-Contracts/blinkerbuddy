@@ -228,11 +228,11 @@ function startCountdown(plot, index) {
             // For a 3, 2, 1 countdown, we'd need to adjust the `values` array or logic here.
             // Assuming "Go" is the last step before timer starts.
             if (values[i] === 'Go') { // This is the "1" in a typical 3-2-1
-                playBeep(1600, 200, 0.65); // Very high pitch for 'Go' (race start sound) with increased volume
+                playBeep(400, 200, 0.65); // Low pitch for 'Go' with increased volume
             } else if (values[i] === 'Set') { // This is the "2"
-                playBeep(1200, 150, 0.4); // Higher pitch for 'Set' (A5) with medium volume
+                playBeep(300, 150, 0.4); // Lower pitch for 'Set' with medium volume
             } else if (values[i] === 'Ready') { // This is the "3"
-                playBeep(880.46, 150, 0.3); // Medium pitch for 'Ready' (F5) with lower volume
+                playBeep(200, 150, 0.3); // Lowest pitch for 'Ready' with lower volume
             }
             i++;
         } else {
