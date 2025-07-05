@@ -15,14 +15,6 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ t
     checknewday(); // Check if it's a new day to reset blink count
 });
 
-//fix the following console command for testing purposes 
-//chrome.storage.local.get([highScore])
-
-//fixed command: 
-//chrome.storage.local.get(['highScore'], ({ highScore }) => console.log(highScore));
-
-//now to set it to 31
-//chrome.storage.local.set({ highScore: 31 }, () => console.log('High score set to 31'));
 
 // Update the plots to reflect the current state of trees
 function updatePlots() {
