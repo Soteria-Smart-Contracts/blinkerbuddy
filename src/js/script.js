@@ -103,7 +103,10 @@ function playSirenSound(duration = 2000) {
     }
 
     performSweep(context.currentTime); // Initial sweep
-    //simultaniously play blinkeralert.mp
+    //simultaniously play blinkalert.mp3 in src/images/blinkalert.mp3
+    const blinkAlertAudio = new Audio('src/images/blinkalert.mp3');
+    blinkAlertAudio.volume = 0.5; // Set volume for the alert sound
+    blinkAlertAudio.loop = true; // Loop the alert sound
 
     sirenSweepInterval = setInterval(() => {
         cycles++;
