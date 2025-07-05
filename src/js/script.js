@@ -268,10 +268,8 @@ function startTimer(plot, index) {
         timerElement.textContent = `${remainingTime}s`;
 
         // New audio cues for the last 3 seconds
-        if (remainingTime === 2) { // When "2s" is about to be displayed or just displayed
-            playBeep(1000, 100); // High beep
-        } else if (remainingTime === 1) { // When "1s" is about to be displayed
-            playBeep(1200, 100); // Higher beep
+        if (remainingTime === 2 || remainingTime === 1) { // Replay the same cue as the countdown
+            playBeep(500, 200, 0.5); // Medium pitch for countdown cues
         }
 
         if (elapsed >= 8) {
