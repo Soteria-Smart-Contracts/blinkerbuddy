@@ -250,7 +250,7 @@ function startTimer(plot, index) {
     let startTime = Date.now();
     let soundplayed2sec;
     let soundplayed1sec;
-    let blinkeralertf
+    let soundplayed0sec
     let interval = setInterval(() => {
         let elapsed = (Date.now() - startTime) / 1000;
         let timerElement = plot.querySelector('.timer');
