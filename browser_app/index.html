@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blinker Game</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="game-container">
+    <div class="field">
+      <div class="plot" data-index="0"></div>
+      <div class="plot" data-index="1"></div>
+      <div class="plot" data-index="2"></div>
+      <div class="plot" data-index="3"></div>
+      <div class="plot" data-index="4"></div>
+      <div class="plot" data-index="5"></div>
+    </div>
+  </div>
+  <div id="blink-stats">
+    Today: <span id="blink-count">0</span> | High Score: <span id="high-score">0</span>
+  </div>
+  <button id="reset-button">Reset Trees</button>
+  <div id="countdown-overlay">
+    <div class="countdown-text" id="countdown-text"></div>
+  </div>
+  <script src="js/script.js"></script>
+</body>
+</html>
