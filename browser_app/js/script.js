@@ -103,8 +103,8 @@ function playSirenSound(duration = 2000) {
     }
 
     performSweep(context.currentTime); // Initial sweep
-    //simultaniously play blinkalert.mp3 in src/images/blinkalert.mp3
-    const blinkAlertAudio = new Audio('src/images/blinkalert.mp3');
+    //simultaniously play blinkalert.mp3 in images/blinkalert.mp3
+    const blinkAlertAudio = new Audio('images/blinkalert.mp3');
     blinkAlertAudio.volume = 0.5; // Set volume for the alert sound
     blinkAlertAudio.play().catch(error => console.error('Error playing blink alert sound:', error));
 
@@ -392,7 +392,7 @@ function displayGnome() {
     overlay.style.flexDirection = 'column';
 
     const img = document.createElement('img');
-    img.src = 'src/images/gnome.jpg';
+    img.src = 'images/gnome.jpg';
     img.style.width = '175px';
     img.style.height = 'auto';
     img.style.margin = '0 auto 10px';
