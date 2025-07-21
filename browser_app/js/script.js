@@ -214,7 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 console.log('Username registered:', data);
                 localStorage.setItem('bbUsername', newUsername);
-            }
+            }).catch(error => {
+                console.error('Error registering username:', error);
+                alert('Error registering username. Please try again later.');
+            });
             tooltip.textContent = newUsername;
             document.getElementById('username-modal').style.display = 'none';
         }
