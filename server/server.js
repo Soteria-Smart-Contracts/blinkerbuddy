@@ -1,2 +1,136 @@
-//create an endpoint /register:username, which will register a new user in the database, and set their blinkscore to 0. for each user, a unique 32 bit hexadecimal id should be generated and returned to the client, along with the username and blinkscore in a json object in the database. the id should be stored in the database as a string, and then make a second endpoint called /export:username, which will return a unique one time use token for the user to export their account to another device. the token should be another 32 bit hexadecimal string, but unique for this instance and expiring after 3 minutes. the one time token should be stored in the database as a string, in a string spot which is empty and used only for this purpose, which is directly below the user's id in the database. the token should be deleted from the database after it is used, or automatically after 3 minutes from within this server.
 
+const http = require('http');
+const url = require('url');
+const crypto = require('crypto');
+
+// In-memory database
+const database = {};
+const exportTokens = {};
+
+// Generate 32-bit hexadecimal ID
+function generateHexId() {
+    return crypto.randomBytes(16).toString('hex');
+}
+
+// Clean up expired tokens
+function cleanupExpiredTokens() {
+    const now = Date.now();
+    for (const [token, data] of Object.entries(exportTokens)) {
+        if (now > data.expiresAt) {
+            delete exportTokens[token];
+            // Remove token from user's record
+            if (database[data.username]) {
+                database[data.username].exportToken = '';
+            }
+        }
+    }
+}
+
+// Run token cleanup every minute
+setInterval(cleanupExpiredTokens, 60000);
+
+const server = http.createServer((req, res) => {
+    const parsedUrl = url.parse(req.url, true);
+    const pathname = parsedUrl.pathname;
+    
+    // Enable CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+    }
+    
+    // Register endpoint: /register:username
+    if (pathname.startsWith('/register:')) {
+        const username = pathname.substring(10); // Remove '/register:' prefix
+        
+        if (!username) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Username is required' }));
+            return;
+        }
+        
+        // Check if user already exists
+        if (database[username]) {
+            res.writeHead(409, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Username already exists' }));
+            return;
+        }
+        
+        // Create new user
+        const userId = generateHexId();
+        database[username] = {
+            id: userId,
+            username: username,
+            blinkscore: 0,
+            exportToken: ''
+        };
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            id: userId,
+            username: username,
+            blinkscore: 0
+        }));
+        return;
+    }
+    
+    // Export endpoint: /export:username
+    if (pathname.startsWith('/export:')) {
+        const username = pathname.substring(8); // Remove '/export:' prefix
+        
+        if (!username) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Username is required' }));
+            return;
+        }
+        
+        // Check if user exists
+        if (!database[username]) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+            return;
+        }
+        
+        // Generate one-time export token
+        const exportToken = generateHexId();
+        const expiresAt = Date.now() + (3 * 60 * 1000); // 3 minutes from now
+        
+        // Store token in database and tracking object
+        database[username].exportToken = exportToken;
+        exportTokens[exportToken] = {
+            username: username,
+            expiresAt: expiresAt
+        };
+        
+        // Set up automatic cleanup for this specific token after 3 minutes
+        setTimeout(() => {
+            if (exportTokens[exportToken]) {
+                delete exportTokens[exportToken];
+                if (database[username]) {
+                    database[username].exportToken = '';
+                }
+            }
+        }, 3 * 60 * 1000);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            token: exportToken,
+            expiresIn: 180 // 3 minutes in seconds
+        }));
+        return;
+    }
+    
+    // Default response for other routes
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Endpoint not found' }));
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${PORT}`);
+});
