@@ -54,11 +54,17 @@ const server = http.createServer(async (req, res) => {
 
   // Set CORS headers for allowed origins
   const origin = req.headers.origin;
-  if (origin === 'https://blinke.netlify.app' || origin === 'http://devserver:5500') {
+  const allowedOrigins = ['https://blinke.netlify.app', 'http://devserver:5500'];
+  
+  if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-App-Source');
+  } else if (!origin) {
+    // For requests without origin header (like from Postman), default to blinke.netlify.app
+    res.setHeader('Access-Control-Allow-Origin', 'https://blinke.netlify.app');
   }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-App-Source');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
