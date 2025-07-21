@@ -6,24 +6,32 @@ const crypto = require('crypto');
 // In-memory database (consider using a persistent database for production)
 const users = new Map();
 const exportTokens = new Map(); // Store tokens with expiry timestamps
+const activeExports = new Map(); // Store active export info (without secret tokens)
 
 // Helper function to generate 32-bit hexadecimal ID
 function generateHexId() {
   return crypto.randomBytes(16).toString('hex');
 }
 
-// Helper function to clean expired tokens
-function cleanExpiredTokens() {
-  const now = Date.now();
-  for (const [token, data] of exportTokens.entries()) {
-    if (now > data.expires) {
-      exportTokens.delete(token);
+// Helper function to remove expired token
+function removeExpiredToken(exportToken, userId) {
+  // Remove from export tokens
+  exportTokens.delete(exportToken);
+  
+  // Remove from active exports
+  activeExports.delete(exportToken);
+  
+  // Clear token from user record
+  if (users.has(userId)) {
+    const user = users.get(userId);
+    if (user.exportToken === exportToken) {
+      user.exportToken = null;
+      users.set(userId, user);
     }
   }
+  
+  console.log(`[${new Date().toISOString()}] Export token expired and removed: ${exportToken.substring(0, 8)}...`);
 }
-
-// Clean expired tokens every minute
-setInterval(cleanExpiredTokens, 60000);
 
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
@@ -130,16 +138,17 @@ const server = http.createServer((req, res) => {
       expires: expirationTime
     });
 
-    // Set timeout to clear token after 3 minutes
+    // Add to active exports (without the secret token)
+    activeExports.set(exportToken, {
+      userId: targetUserId,
+      username: username,
+      createdAt: Date.now(),
+      expiresAt: expirationTime
+    });
+
+    // Set individual timeout to clear token after exactly 3 minutes
     setTimeout(() => {
-      if (users.has(targetUserId)) {
-        const user = users.get(targetUserId);
-        if (user.exportToken === exportToken) {
-          user.exportToken = null;
-          users.set(targetUserId, user);
-        }
-      }
-      exportTokens.delete(exportToken);
+      removeExpiredToken(exportToken, targetUserId);
     }, 3 * 60 * 1000);
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -169,10 +178,31 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Active exports endpoint: /activeexports
+  if (pathname === '/activeexports' && req.method === 'GET') {
+    const now = Date.now();
+    const activeExportsList = Array.from(activeExports.values()).map(exportData => ({
+      userId: exportData.userId,
+      username: exportData.username,
+      createdAt: new Date(exportData.createdAt).toISOString(),
+      expiresAt: new Date(exportData.expiresAt).toISOString(),
+      timeRemaining: Math.max(0, Math.ceil((exportData.expiresAt - now) / 1000)) // seconds remaining
+    }));
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      active_exports: activeExportsList,
+      total_active: activeExportsList.length,
+      timestamp: new Date().toISOString()
+    }));
+    return;
+  }
+
   // Reset endpoint: /reset (for development purposes)
   if (pathname === '/reset' && req.method === 'GET') {
     users.clear();
     exportTokens.clear();
+    activeExports.clear();
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
