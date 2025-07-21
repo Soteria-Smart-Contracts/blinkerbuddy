@@ -191,7 +191,22 @@ checknewday(); // Check if it's a new day to reset blink count
 document.addEventListener('DOMContentLoaded', () => {
    //the sotrage is checked for an id at the start of the script, so we can use that instead, and then call /loadusername:id to fetch the username of the user
    //if the id is not empty, prompt to enter username, oth
-   
+   if( userId !== '') {
+        fetch(`https://blinkerbuddy-wedergarten.replit.app/loadusername:${userId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            console.log('Username loaded:', data)
+        })
+        .catch(error => {
+            console.error('Error loading username:', error);
+            alert('Error loading username. Please try again later.');
+        });
+    }
     const blinkStats = document.getElementById('blink-stats');
     const tooltip = document.getElementById('username-tooltip');
 
