@@ -137,8 +137,40 @@ const server = http.createServer((req, res) => {
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
+      username: username,
+      id: targetUserId,
+      blinkscore: targetUser.blinkscore,
       token: exportToken,
       expires_in: 180 // 3 minutes in seconds
+    }));
+    return;
+  }
+
+  // All users endpoint: /all
+  if (pathname === '/all' && req.method === 'GET') {
+    const allUsers = Array.from(users.values()).map(user => ({
+      id: user.id,
+      username: user.username,
+      blinkscore: user.blinkscore
+    }));
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      users: allUsers,
+      total_users: allUsers.length
+    }));
+    return;
+  }
+
+  // Reset endpoint: /reset (for development purposes)
+  if (pathname === '/reset' && req.method === 'GET') {
+    users.clear();
+    exportTokens.clear();
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      message: 'All users and tokens have been reset',
+      timestamp: new Date().toISOString()
     }));
     return;
   }
