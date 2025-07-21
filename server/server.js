@@ -339,6 +339,60 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Import check endpoint: /importcheck:token
+  if (pathname.startsWith('/importcheck:') && req.method === 'GET') {
+    const token = pathname.split(':')[1];
+
+    if (!token || token.trim() === '') {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Token is required' }));
+      return;
+    }
+
+    try {
+      // Check if token exists in active exports
+      const exportResult = await db.get(`activeExport:${token}`);
+      let exportData = null;
+      
+      if (exportResult && exportResult.ok && exportResult.value) {
+        exportData = exportResult.value;
+      } else if (exportResult && exportResult.userId) {
+        exportData = exportResult;
+      }
+
+      if (!exportData) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid or expired token' }));
+        return;
+      }
+
+      // Check if token has expired
+      const now = Date.now();
+      if (exportData.expiresAt && now > exportData.expiresAt) {
+        // Token has expired, remove it
+        await db.delete(`activeExport:${token}`);
+        res.writeHead(410, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Token has expired' }));
+        return;
+      }
+
+      // Token is valid, return user information
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        valid: true,
+        username: exportData.username,
+        id: exportData.userId,
+        expires_at: new Date(exportData.expiresAt).toISOString(),
+        time_remaining: Math.max(0, Math.ceil((exportData.expiresAt - now) / 1000)) // seconds remaining
+      }));
+    } catch (error) {
+      console.error('Error checking import token:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
+    return;
+  }
+
   // Clear exports endpoint: /clearexports
   if (pathname === '/clearexports' && req.method === 'GET') {
     try {
