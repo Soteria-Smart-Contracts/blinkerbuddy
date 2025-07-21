@@ -39,6 +39,16 @@ async function removeExpiredToken(exportToken, userId) {
 }
 
 const server = http.createServer(async (req, res) => {
+  // Set a timeout for all requests to prevent hanging
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      res.writeHead(408, { 'Content-Type': 'text/plain' });
+      res.end('Request Timeout');
+    }
+  }, 10000); // 10 second timeout
+  
+  res.on('finish', () => clearTimeout(timeout));
+  
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
 
@@ -58,8 +68,8 @@ const server = http.createServer(async (req, res) => {
 
   // Health check endpoint: /
   if (pathname === '/' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', message: 'Server is running' }));
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('OK');
     return;
   }
 
