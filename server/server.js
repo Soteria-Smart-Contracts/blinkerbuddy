@@ -10,29 +10,8 @@ const db = new Database();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Single, comprehensive CORS middleware
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from origin: ${req.headers.origin || 'no-origin'}`);
-
-  // Set all necessary CORS headers
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.header('Access-Control-Allow-Headers', '*');
-  res.header('Access-Control-Allow-Credentials', 'false');
-  res.header('Access-Control-Max-Age', '86400');
-  res.header('Access-Control-Expose-Headers', '*');
-  res.header('Access-Control-Allow-Private-Network', 'true');
-
-  // Handle preflight requests immediately
-  if (req.method === 'OPTIONS') {
-    console.log(`[${new Date().toISOString()}] Handled OPTIONS preflight request for ${req.url}`);
-    return res.status(200).json({ message: 'Preflight OK' });
-  }
-
-  next();
-});
-
-// Body parsing middleware
+// Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -327,43 +306,8 @@ app.get('/activeexports', async (req, res) => {
   }
 });
 
-// Load username by ID endpoint: /loadusername/:id
-app.get('/loadusername/:id', async (req, res) => {
-  const userId = req.params.id;
-
-  if (!userId || userId.trim() === '') {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
-
-  try {
-    // Find user by ID
-    const userResult = await db.get(`user:${userId}`);
-    let userData = null;
-    
-    if (userResult && userResult.ok && userResult.value) {
-      userData = userResult.value;
-    } else if (userResult && userResult.id) {
-      userData = userResult;
-    }
-
-    if (!userData) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Return user data
-    res.status(200).json({
-      id: userData.id,
-      username: userData.username,
-      blinkscore: userData.blinkscore || 0
-    });
-  } catch (error) {
-    console.error('Error loading user by ID:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Load username by username endpoint: /loadusername/username/:username
-app.get('/loadusername/username/:username', async (req, res) => {
+// Load username endpoint: /loadusername/:username
+app.get('/loadusername/:username', async (req, res) => {
   const username = req.params.username;
 
   if (!username || username.trim() === '') {
