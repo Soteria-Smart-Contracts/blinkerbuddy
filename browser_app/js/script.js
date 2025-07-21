@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const usernameInput = document.getElementById('username-input');
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
-            //
+            //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/
             tooltip.textContent = newUsername;
             document.getElementById('username-modal').style.display = 'none';
         }
