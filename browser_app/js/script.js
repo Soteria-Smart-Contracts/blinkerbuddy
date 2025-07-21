@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
             //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register:username
-            fetch(`https://blinkerbuddy-wedergarten.replit.app/register:${newUsername}`)
+            fetch(`https://cors-anywhere.herokuapp.com/https://blinkerbuddy-wedergarten.replit.app/register:${newUsername}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tooltip.textContent = newUsername;
             }).catch(error => {
                 console.error('Error registering username:', error);
-                alert('Error registering username. Please try again later.');
+                alert('Error registering username. Please try again later. Ensure the server allows CORS or use a proxy.');
             });
             tooltip.textContent = newUsername;
             document.getElementById('username-modal').style.display = 'none';
