@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
             //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register/username
-            fetch(`https://blinkerbuddy-wedergarten.replit.app/register/${newUsername}`)
+            fetch(`https://blinkerbuddy-wedergarten.replit.app/register/${encodeURIComponent(newUsername)}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
