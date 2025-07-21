@@ -74,7 +74,15 @@ const server = http.createServer(async (req, res) => {
       const usersListResult = await db.list('user:');
       const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
       for (const key of usersList) {
-        const userData = await db.get(key);
+        const userResult = await db.get(key);
+        // Handle both direct user object and wrapped response
+        let userData = null;
+        if (userResult && userResult.ok && userResult.value) {
+          userData = userResult.value;
+        } else if (userResult && userResult.id) {
+          userData = userResult;
+        }
+        
         if (userData && userData.username === username) {
           res.writeHead(409, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Username already exists' }));
@@ -189,16 +197,32 @@ const server = http.createServer(async (req, res) => {
       const usersListResult = await db.list('user:');
       const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
       
+      console.log(`[${new Date().toISOString()}] Found ${usersList.length} user keys in /all`);
+      
       for (const key of usersList) {
-        const user = await db.get(key);
-        if (user) {
+        const userResult = await db.get(key);
+        console.log(`[${new Date().toISOString()}] Retrieved data for key ${key}:`, userResult);
+        
+        // Handle both direct user object and wrapped response
+        let user = null;
+        if (userResult && userResult.ok && userResult.value) {
+          user = userResult.value;
+        } else if (userResult && userResult.id) {
+          user = userResult;
+        }
+        
+        if (user && user.id && user.username) {
           allUsers.push({
             id: user.id,
             username: user.username,
-            blinkscore: user.blinkscore
+            blinkscore: user.blinkscore || 0
           });
+        } else {
+          console.log(`[${new Date().toISOString()}] Invalid user data for key ${key}:`, user);
         }
       }
+
+      console.log(`[${new Date().toISOString()}] Final users array:`, allUsers);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
