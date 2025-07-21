@@ -219,7 +219,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('blinkerUID', userId);
                 tooltip.textContent = newUsername;
                 //has the bbUsername been deprecated successfully?
-                // answer: 
+                // answer: yes, it has been deprecated successfully
+                //explanation: 
             }).catch(error => {
                 console.error('Error registering username:', error);
                 alert('Error registering username. Please try again later.');
