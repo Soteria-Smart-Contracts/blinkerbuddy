@@ -539,4 +539,6 @@ document.getElementById('blink-count').addEventListener('click', () => {
 });
 
 // localStorage.removeItem('bbUsername');
+//conver this to browser extension eqivalent
+// browser.storage.local.remove('bbUsername');
 // alert('Local storage cleared for testing purposes. Please refresh the page to start over.');
