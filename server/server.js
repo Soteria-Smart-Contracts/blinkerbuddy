@@ -39,6 +39,19 @@ async function removeExpiredToken(exportToken, userId) {
 }
 
 const server = http.createServer(async (req, res) => {
+  // Set CORS headers IMMEDIATELY - before anything else
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-App-Source, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
   // Set a timeout for all requests to prevent hanging
   const timeout = setTimeout(() => {
     if (!res.headersSent) {
@@ -51,18 +64,6 @@ const server = http.createServer(async (req, res) => {
   
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
-
-  // Allow all origins - CORS disabled
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-App-Source');
-
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
-    return;
-  }
 
   console.log(`[${new Date().toISOString()}] ${req.method} ${pathname}`);
 
@@ -549,7 +550,7 @@ const server = http.createServer(async (req, res) => {
   res.end('404 - Endpoint not found: ' + pathname + '\n');
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
 });
