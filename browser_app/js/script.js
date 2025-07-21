@@ -180,8 +180,11 @@ checknewday(); // Check if it's a new day to reset blink count
 
 document.addEventListener('DOMContentLoaded', () => {
     const username = localStorage.getItem('bbUsername');
+    const blinkStats = document.getElementById('blink-stats');
+    const tooltip = document.getElementById('username-tooltip');
+
     if (username) {
-        document.getElementById('blink-stats').title = username;
+        tooltip.textContent = username;
     } else {
         document.getElementById('username-modal').style.display = 'flex';
     }
@@ -191,9 +194,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
             localStorage.setItem('bbUsername', newUsername);
-            document.getElementById('blink-stats').title = newUsername;
+            tooltip.textContent = newUsername;
             document.getElementById('username-modal').style.display = 'none';
         }
+    });
+
+    blinkStats.addEventListener('mouseover', () => {
+        if (tooltip.textContent) {
+            tooltip.style.visibility = 'visible';
+            tooltip.style.opacity = '1';
+        }
+    });
+
+    blinkStats.addEventListener('mouseout', () => {
+        tooltip.style.visibility = 'hidden';
+        tooltip.style.opacity = '0';
     });
 });
 

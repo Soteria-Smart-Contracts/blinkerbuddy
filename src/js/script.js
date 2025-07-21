@@ -161,9 +161,10 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUs
     treeStates = ts || [];
     totalBlinkersToday = tb || 0;
     highScore = hs || 0;
+    const tooltip = document.getElementById('username-tooltip');
 
     if (username) {
-        document.getElementById('blink-stats').title = username;
+        tooltip.textContent = username;
     } else {
         document.getElementById('username-prompt').style.display = 'block';
     }
@@ -174,15 +175,30 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUs
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    const blinkStats = document.getElementById('blink-stats');
+    const tooltip = document.getElementById('username-tooltip');
+
     document.getElementById('username-submit').addEventListener('click', () => {
         const usernameInput = document.getElementById('username-input');
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
             chrome.storage.local.set({ bbUsername: newUsername }, () => {
-                document.getElementById('blink-stats').title = newUsername;
+                tooltip.textContent = newUsername;
                 document.getElementById('username-prompt').style.display = 'none';
             });
         }
+    });
+
+    blinkStats.addEventListener('mouseover', () => {
+        if (tooltip.textContent) {
+            tooltip.style.visibility = 'visible';
+            tooltip.style.opacity = '1';
+        }
+    });
+
+    blinkStats.addEventListener('mouseout', () => {
+        tooltip.style.visibility = 'hidden';
+        tooltip.style.opacity = '0';
     });
 });
 
