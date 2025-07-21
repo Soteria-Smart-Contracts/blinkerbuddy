@@ -7,6 +7,7 @@ channel = "stable-24_05"
 [deployment]
 run = "node server/server.js"
 deployTrigger = ["main"]
+deploymentTarget = "cloudrun"
 
 [[ports]]
 localPort = 3000
