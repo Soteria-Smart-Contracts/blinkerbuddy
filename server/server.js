@@ -12,22 +12,7 @@ function generateHexId() {
     return crypto.randomBytes(16).toString('hex');
 }
 
-// Clean up expired tokens
-function cleanupExpiredTokens() {
-    const now = Date.now();
-    for (const [token, data] of Object.entries(exportTokens)) {
-        if (now > data.expiresAt) {
-            delete exportTokens[token];
-            // Remove token from user's record
-            if (database[data.username]) {
-                database[data.username].exportToken = '';
-            }
-        }
-    }
-}
-
-// Run token cleanup every minute
-setInterval(cleanupExpiredTokens, 60000);
+// Token cleanup is handled individually by setTimeout when tokens are created
 
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
