@@ -1,0 +1,138 @@
+const express = require("express");
+const cors = require("cors");
+const { createProxyMiddleware } = require("http-proxy-middleware");
+require("dotenv").config();
+
+const startTraitUpdaterServer = require("./updater");
+const startUpdater2Server = require("./updater2");
+const startRewardsServer = require("./rewards");
+const startRewardsManagerServer = require("./rewardsmanager");
+const startConsentServer = require("./consentpremium");
+
+const {
+  getMerkleRoots,
+  getRemixFormat,
+} = require("./merklegen");
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Enable trust proxy
+app.set("trust proxy", 1);
+
+// Schedule route
+app.get("/schedule", (req, res) => {
+  console.log("Received request on /schedule");
+  try {
+    const roots = getMerkleRoots();
+    console.log("Merkle roots retrieved successfully.");
+    res.json({ schedule: roots });
+  } catch (error) {
+    console.error("Error retrieving Merkle roots:", error);
+    res.status(500).send("Error retrieving Merkle roots");
+  }
+});
+
+// Remix deployment route
+app.get("/merkle/deploy", (req, res) => {
+  console.log("Received request on /merkle/deploy");
+  try {
+    const remixFormat = getRemixFormat();
+    console.log("Remix deployment parameters retrieved successfully.");
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Remix Deployment Parameters</title>
+      </head>
+      <body>
+        <h1>Remix Deployment Parameters</h1>
+        ${remixFormat}
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error("Error retrieving Remix deployment parameters:", error);
+    res.status(500).send("Error retrieving Remix deployment parameters");
+  }
+});
+
+// Proxy middleware for trait updater server under /traits prefix
+app.use(
+  "/traits",
+  createProxyMiddleware({
+    target: "http://localhost:3001",
+    changeOrigin: true,
+    pathRewrite: {
+      "^/traits": "",
+    },
+  }),
+);
+
+// Proxy middleware for coins price server under /updater prefix
+app.use(
+  "/updater",
+  createProxyMiddleware({
+    target: "http://localhost:3002",
+    changeOrigin: true,
+    pathRewrite: {
+      "^/updater": "",
+    },
+  }),
+);
+
+// Proxy middleware for rewards server under /rewards prefix
+app.use(
+  "/rewards",
+  createProxyMiddleware({
+    target: "http://localhost:3003",
+    changeOrigin: true,
+    pathRewrite: {
+      "^/rewards": "",
+    },
+  }),
+);
+
+// Proxy middleware for rewards manager server under /rewardsmanager prefix
+app.use(
+  "/rewardsmanager",
+  createProxyMiddleware({
+    target: "http://localhost:3004",
+    changeOrigin: true,
+    pathRewrite: {
+      "^/rewardsmanager": "",
+    },
+  }),
+);
+
+// Proxy middleware for consent server under /consentpremium prefix
+app.use(
+  "/consentpremium",
+  createProxyMiddleware({
+    target: "http://localhost:3005",
+    changeOrigin: true,
+    pathRewrite: {
+      "^/consentpremium": "",
+    },
+  }),
+);
+
+
+// Start the main server
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
+// Start other servers on their respective ports
+startTraitUpdaterServer(3001);
+startUpdater2Server(3002);
+startRewardsServer(3003);
+startRewardsManagerServer(3004);
+startConsentServer(3005);
