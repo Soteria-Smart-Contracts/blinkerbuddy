@@ -121,3 +121,18 @@ body {
   font-weight: bold;
   color: #fff;
 }
+
+#username-prompt {
+  padding: 10px;
+  text-align: center;
+  background-color: #00cc00;
+}
+
+#header {
+  text-align: center;
+  padding: 10px;
+  font-size: 1.2em;
+  color: #fff;
+  background-color: #00cc00;
+  border-bottom: 1px solid #008000;
+}

@@ -157,13 +157,33 @@ function stopSirenSound() {
 }
 
 // Load saved states from storage
-chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ treeStates: ts, totalBlinkersToday: tb, highScore: hs }) => {
+chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUsername'], ({ treeStates: ts, totalBlinkersToday: tb, highScore: hs, bbUsername: username }) => {
     treeStates = ts || [];
     totalBlinkersToday = tb || 0;
     highScore = hs || 0;
+
+    if (username) {
+        document.getElementById('username-display').textContent = `User: ${username}`;
+    } else {
+        document.getElementById('username-prompt').style.display = 'block';
+    }
+
     updatePlots();
     updateBlinkStats();
     checknewday(); // Check if it's a new day to reset blink count
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('username-submit').addEventListener('click', () => {
+        const usernameInput = document.getElementById('username-input');
+        const newUsername = usernameInput.value.trim();
+        if (newUsername) {
+            chrome.storage.local.set({ bbUsername: newUsername }, () => {
+                document.getElementById('username-display').textContent = `User: ${newUsername}`;
+                document.getElementById('username-prompt').style.display = 'none';
+            });
+        }
+    });
 });
 
 //fix the following console command for testing purposes

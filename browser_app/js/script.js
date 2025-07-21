@@ -178,6 +178,25 @@ updatePlots();
 updateBlinkStats();
 checknewday(); // Check if it's a new day to reset blink count
 
+document.addEventListener('DOMContentLoaded', () => {
+    const username = localStorage.getItem('bbUsername');
+    if (username) {
+        document.getElementById('username-display').textContent = `User: ${username}`;
+    } else {
+        document.getElementById('username-modal').style.display = 'flex';
+    }
+
+    document.getElementById('username-submit').addEventListener('click', () => {
+        const usernameInput = document.getElementById('username-input');
+        const newUsername = usernameInput.value.trim();
+        if (newUsername) {
+            localStorage.setItem('bbUsername', newUsername);
+            document.getElementById('username-display').textContent = `User: ${newUsername}`;
+            document.getElementById('username-modal').style.display = 'none';
+        }
+    });
+});
+
 //fix the following console command for testing purposes
 //chrome.storage.local.get([highScore])
 

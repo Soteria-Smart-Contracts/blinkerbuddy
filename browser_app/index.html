@@ -9,6 +9,16 @@
   <link rel="apple-touch-icon" href="images/gnome.jpg">
 </head>
 <body>
+  <div id="username-modal" style="display: none;">
+    <div id="username-modal-content">
+      <p>Enter a username:</p>
+      <input type="text" id="username-input" maxlength="20">
+      <button id="username-submit">Submit</button>
+    </div>
+  </div>
+  <div id="header">
+    <span id="username-display"></span>
+  </div>
   <div id="game-container">
     <div class="field">
       <div class="plot" data-index="0"></div>
