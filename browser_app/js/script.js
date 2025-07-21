@@ -4,6 +4,7 @@ let totalBlinkersToday = 0;
 let highScore = 0;
 let isBlinking = false;
 let plantedTreesCount = 0;
+let userId = localStorage.getItem('blinkerUID') || '';
 
 // Web Audio API setup
 let audioCtx = null;
@@ -188,7 +189,7 @@ updateBlinkStats();
 checknewday(); // Check if it's a new day to reset blink count
 
 document.addEventListener('DOMContentLoaded', () => {
-    const username = localStorage.getItem('bbUsername');
+   // const username = localStorage.getItem('bbUsername');
     const blinkStats = document.getElementById('blink-stats');
     const tooltip = document.getElementById('username-tooltip');
 
@@ -202,7 +203,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const usernameInput = document.getElementById('username-input');
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
-            localStorage.setItem('bbUsername', newUsername);
+            //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register:username
+            fetch(`https://blinkerbuddy-wedergarten.replit.app/register:${newUsername}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(data => {
+                console.log('Username registered:', data);
+                //it will return a json containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"}
+                const responseData = JSON.parse(data);
+                userId = responseData.id; // Store the userId
+                localStorage.setItem('blinkerUID', userId);
+                tooltip.textContent = newUsername;
+            }).catch(error => {
+                console.error('Error registering username:', error);
+                alert('Error registering username. Please try again later.');
+            });
             tooltip.textContent = newUsername;
             document.getElementById('username-modal').style.display = 'none';
         }
