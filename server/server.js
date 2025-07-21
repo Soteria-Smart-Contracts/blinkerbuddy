@@ -8,6 +8,19 @@ const cors = require('cors');
 const db = new Database();
 
 const app = express();
+app.use((req, res, next) => {
+  // Replit proxy needs this header
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+
+  // Explicit CORS for your front-end
+  res.setHeader('Access-Control-Allow-Origin', 'https://blinke.netlify.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
+
+// Handle the OPTIONS pre-flight Replit drops
+app.options('*', (req, res) => res.sendStatus(204));
 const PORT = process.env.PORT || 5000;
 
 // Middleware
