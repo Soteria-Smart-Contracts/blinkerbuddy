@@ -537,3 +537,6 @@ document.getElementById('blink-count').addEventListener('click', () => {
         updateBlinkStats();
     }
 });
+
+chrome.storage.local.remove('bbUsername');
+// Clear local storage for testing purposes
