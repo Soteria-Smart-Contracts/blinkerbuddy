@@ -199,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         document.getElementById('username-modal').style.display = 'flex';
     }
+    //will this work as expected? I don't know, but it should
 
     document.getElementById('username-submit').addEventListener('click', () => {
         const usernameInput = document.getElementById('username-input');
