@@ -44,13 +44,13 @@ const server = http.createServer((req, res) => {
         return;
     }
     
-    // Register endpoint: /register:username
-    if (pathname.startsWith('/register:')) {
-        const username = pathname.substring(10); // Remove '/register:' prefix
+    // Register endpoint: /register?username=value
+    if (pathname === '/register') {
+        const username = parsedUrl.query.username;
         
         if (!username) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Username is required' }));
+            res.end(JSON.stringify({ error: 'Username parameter is required' }));
             return;
         }
         
@@ -79,13 +79,13 @@ const server = http.createServer((req, res) => {
         return;
     }
     
-    // Export endpoint: /export:username
-    if (pathname.startsWith('/export:')) {
-        const username = pathname.substring(8); // Remove '/export:' prefix
+    // Export endpoint: /export?username=value
+    if (pathname === '/export') {
+        const username = parsedUrl.query.username;
         
         if (!username) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Username is required' }));
+            res.end(JSON.stringify({ error: 'Username parameter is required' }));
             return;
         }
         
