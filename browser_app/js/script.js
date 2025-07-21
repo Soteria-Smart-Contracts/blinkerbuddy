@@ -220,7 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 tooltip.textContent = newUsername;
                 //has the bbUsername been deprecated successfully?
                 // answer: yes, it has been deprecated successfully
-                //detailed explanation:
+                //detailed explanation: 
+                //
             }).catch(error => {
                 console.error('Error registering username:', error);
                 alert('Error registering username. Please try again later.');
