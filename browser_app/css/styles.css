@@ -171,6 +171,10 @@ body {
   opacity: 1;
 }
 
+#blink-stats {
+  position: relative;
+}
+
 #username-modal {
   position: fixed;
   top: 0;
