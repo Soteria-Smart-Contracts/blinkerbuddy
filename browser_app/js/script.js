@@ -106,9 +106,20 @@ function playSirenSound(duration = 2000) {
     //simultaniously play blinkalert.mp3 in images/blinkalert.mp3
     const blinkAlertAudio = new Audio('images/blinkalert.mp3');
     blinkAlertAudio.volume = 0.5; // Set volume for the alert sound
-    blinkAlertAudio.play().catch(error => {
-        console.error('Audio playback failed. Ensure this is triggered by a user gesture:', error);
-    });
+
+    // Ensure AudioContext is resumed if needed
+    context = getAudioContext();
+    if (context.state === 'suspended') {
+        context.resume().then(() => {
+            blinkAlertAudio.play().catch(error => {
+                console.error('Audio playback failed. Ensure this is triggered by a user gesture:', error);
+            });
+        });
+    } else {
+        blinkAlertAudio.play().catch(error => {
+            console.error('Audio playback failed. Ensure this is triggered by a user gesture:', error);
+        });
+    }
     blinkAlertAudio.play().catch(error => console.error('Error playing blink alert sound:', error));
 
     sirenSweepInterval = setInterval(() => {
