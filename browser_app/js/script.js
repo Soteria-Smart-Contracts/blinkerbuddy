@@ -213,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 console.log('Username registered:', data);
+                //it will
                 localStorage.setItem('bbUsername', newUsername);
             }).catch(error => {
                 console.error('Error registering username:', error);
