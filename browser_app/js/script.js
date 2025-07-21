@@ -189,8 +189,7 @@ updateBlinkStats();
 checknewday(); // Check if it's a new day to reset blink count
 
 document.addEventListener('DOMContentLoaded', () => {
-   // const username = localStorage.getItem('bbUsername');
-   //the endpoint is checked at th
+   //the sotrage is checked for an id at the start of the script, so we can use that instead
     const userId = localStorage.getItem('blinkerUID');
     const blinkStats = document.getElementById('blink-stats');
     const tooltip = document.getElementById('username-tooltip');
