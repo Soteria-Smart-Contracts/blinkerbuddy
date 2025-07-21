@@ -9,8 +9,22 @@ const db = new Database();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware - this is the key part that fixes CORS!
-app.use(require('cors')()); // Simple cors setup like in your working example
+// Middleware - completely disable CORS with custom headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
