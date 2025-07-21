@@ -213,8 +213,11 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 console.log('Username registered:', data);
-                //it will return a json containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"
-                localStorage.setItem('bbUsername', newUsername);
+                //it will return a json containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"}
+                const responseData = JSON.parse(data);
+                userId = responseData.id; // Store the userId
+                localStorage.setItem('blinkerUID', userId);
+                tooltip.textContent = newUsername;
             }).catch(error => {
                 console.error('Error registering username:', error);
                 alert('Error registering username. Please try again later.');
