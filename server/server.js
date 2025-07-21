@@ -250,14 +250,23 @@ const server = http.createServer(async (req, res) => {
 
       for (const key of exportsList) {
         const exportData = await db.get(key);
-        if (exportData) {
-          activeExportsList.push({
-            userId: exportData.userId,
-            username: exportData.username,
-            createdAt: new Date(exportData.createdAt).toISOString(),
-            expiresAt: new Date(exportData.expiresAt).toISOString(),
-            timeRemaining: Math.max(0, Math.ceil((exportData.expiresAt - now) / 1000)) // seconds remaining
-          });
+        if (exportData && exportData.createdAt && exportData.expiresAt) {
+          // Validate timestamps before converting
+          const createdAt = exportData.createdAt;
+          const expiresAt = exportData.expiresAt;
+          
+          if (typeof createdAt === 'number' && typeof expiresAt === 'number' && 
+              !isNaN(createdAt) && !isNaN(expiresAt)) {
+            activeExportsList.push({
+              userId: exportData.userId,
+              username: exportData.username,
+              createdAt: new Date(createdAt).toISOString(),
+              expiresAt: new Date(expiresAt).toISOString(),
+              timeRemaining: Math.max(0, Math.ceil((expiresAt - now) / 1000)) // seconds remaining
+            });
+          } else {
+            console.log(`[${new Date().toISOString()}] Skipping export with invalid timestamps:`, exportData);
+          }
         }
       }
 
