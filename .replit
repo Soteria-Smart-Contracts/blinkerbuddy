@@ -1,7 +1,6 @@
 modules = ["nodejs-20", "web"]
+run = "node server/server.js"
 
 [nix]
 channel = "stable-24_05"
 
-[run]
-run = "node server/index.js"
