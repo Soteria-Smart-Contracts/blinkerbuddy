@@ -92,6 +92,7 @@ const server = http.createServer(async (req, res) => {
       };
 
       await db.set(`user:${userId}`, newUser);
+      console.log(`[${new Date().toISOString()}] User registered:`, { id: userId, username: username });
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -187,8 +188,11 @@ const server = http.createServer(async (req, res) => {
       const allUsers = [];
       const usersListResult = await db.list('user:');
       const usersList = Array.from(usersListResult || []);
+      console.log(`[${new Date().toISOString()}] Found ${usersList.length} user keys:`, usersList);
+      
       for (const key of usersList) {
         const user = await db.get(key);
+        console.log(`[${new Date().toISOString()}] Retrieved user data for key ${key}:`, user);
         if (user) {
           allUsers.push({
             id: user.id,
@@ -197,6 +201,8 @@ const server = http.createServer(async (req, res) => {
           });
         }
       }
+      
+      console.log(`[${new Date().toISOString()}] Final users array:`, allUsers);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
