@@ -195,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!username) {
         document.getElementById('username-modal').style.display = 'flex';
     }
-    const userId = localStorage.getItem('blinkerUID');
     const blinkStats = document.getElementById('blink-stats');
     const tooltip = document.getElementById('username-tooltip');
 
