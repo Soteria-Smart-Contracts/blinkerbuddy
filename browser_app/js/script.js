@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const usernameInput = document.getElementById('username-input');
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
-            localStorage.setItem('bbUsername', newUsername);
+            //
             tooltip.textContent = newUsername;
             document.getElementById('username-modal').style.display = 'none';
         }
