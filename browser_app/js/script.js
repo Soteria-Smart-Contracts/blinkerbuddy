@@ -203,8 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const usernameInput = document.getElementById('username-input');
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
-            //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register:username
-            fetch(`https://blinkerbuddy-wedergarten.replit.app/register:${newUsername}`)
+            //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register/username
+            fetch(`https://blinkerbuddy-wedergarten.replit.app/register/${newUsername}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
