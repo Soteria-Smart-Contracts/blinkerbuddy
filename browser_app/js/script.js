@@ -230,11 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const usernameInput = document.getElementById('username-input');
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
-            // Use a proxy or configure CORS headers on the server to resolve the issue
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // Example proxy
-            const apiUrl = `https://blinkerbuddy-wedergarten.replit.app/register:${newUsername}`;
-            
-            fetch(proxyUrl + apiUrl)
+            //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register:username
+            fetch(`https://blinkerbuddy-wedergarten.replit.app/register:${newUsername}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -243,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 console.log('Username registered:', data);
-                // It will return a JSON containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"}
+                //it will return a json containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"}
                 const responseData = JSON.parse(data);
                 userId = responseData.id; // Store the userId
                 localStorage.setItem('blinkerUID', userId);
