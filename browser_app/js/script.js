@@ -181,7 +181,7 @@ checknewday(); // Check if it's a new day to reset blink count
 document.addEventListener('DOMContentLoaded', () => {
     const username = localStorage.getItem('bbUsername');
     if (username) {
-        document.getElementById('username-display').textContent = `User: ${username}`;
+        document.getElementById('username-display').innerHTML = `<b>${username}</b>`;
     } else {
         document.getElementById('username-modal').style.display = 'flex';
     }
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
             localStorage.setItem('bbUsername', newUsername);
-            document.getElementById('username-display').textContent = `User: ${newUsername}`;
+            document.getElementById('username-display').innerHTML = `<b>${newUsername}</b>`;
             document.getElementById('username-modal').style.display = 'none';
         }
     });

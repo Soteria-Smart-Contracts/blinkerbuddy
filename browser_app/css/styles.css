@@ -171,11 +171,6 @@ body {
   cursor: pointer;
 }
 
-#header {
-  text-align: center;
-  padding: 10px;
-  font-size: 1.2em;
-  color: #fff;
-  background-color: #00cc00;
-  border-bottom: 1px solid #008000;
+#username-display {
+  font-weight: bold;
 }

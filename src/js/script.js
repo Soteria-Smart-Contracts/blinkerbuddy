@@ -163,7 +163,7 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUs
     highScore = hs || 0;
 
     if (username) {
-        document.getElementById('username-display').textContent = `User: ${username}`;
+        document.getElementById('username-display').innerHTML = `<b>${username}</b>`;
     } else {
         document.getElementById('username-prompt').style.display = 'block';
     }
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
             chrome.storage.local.set({ bbUsername: newUsername }, () => {
-                document.getElementById('username-display').textContent = `User: ${newUsername}`;
+                document.getElementById('username-display').innerHTML = `<b>${newUsername}</b>`;
                 document.getElementById('username-prompt').style.display = 'none';
             });
         }
