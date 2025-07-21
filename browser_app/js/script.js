@@ -12,8 +12,17 @@ function getAudioContext() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
     return audioCtx;
 }
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        getAudioContext();
+    }
+});
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
     const context = getAudioContext();
