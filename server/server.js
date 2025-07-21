@@ -18,7 +18,14 @@ async function removeExpiredToken(exportToken, userId) {
     await db.delete(`activeExport:${exportToken}`);
 
     // Clear token from user record
-    const user = await db.get(`user:${userId}`);
+    const userResult = await db.get(`user:${userId}`);
+    let user = null;
+    if (userResult && userResult.ok && userResult.value) {
+      user = userResult.value;
+    } else if (userResult && userResult.id) {
+      user = userResult;
+    }
+    
     if (user && user.exportToken === exportToken) {
       user.exportToken = null;
       await db.set(`user:${userId}`, user);
@@ -166,12 +173,15 @@ const server = http.createServer(async (req, res) => {
       const expirationTime = Date.now() + (3 * 60 * 1000); // 3 minutes from now
 
       // Store token in active exports (without the secret token)
-      await db.set(`activeExport:${exportToken}`, {
+      const activeExportData = {
         userId: targetUserId,
         username: username,
         createdAt: Date.now(),
         expiresAt: expirationTime
-      });
+      };
+      
+      await db.set(`activeExport:${exportToken}`, activeExportData);
+      console.log(`[${new Date().toISOString()}] Stored active export:`, activeExportData);
 
       // Set individual timeout to clear token after exactly 3 minutes
       setTimeout(() => {
@@ -249,7 +259,17 @@ const server = http.createServer(async (req, res) => {
       const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
 
       for (const key of exportsList) {
-        const exportData = await db.get(key);
+        const exportResult = await db.get(key);
+        console.log(`[${new Date().toISOString()}] Retrieved export data for key ${key}:`, exportResult);
+        
+        // Handle both direct export object and wrapped response
+        let exportData = null;
+        if (exportResult && exportResult.ok && exportResult.value) {
+          exportData = exportResult.value;
+        } else if (exportResult && exportResult.userId) {
+          exportData = exportResult;
+        }
+        
         if (exportData && exportData.createdAt && exportData.expiresAt) {
           // Validate timestamps before converting
           const createdAt = exportData.createdAt;
@@ -267,6 +287,8 @@ const server = http.createServer(async (req, res) => {
           } else {
             console.log(`[${new Date().toISOString()}] Skipping export with invalid timestamps:`, exportData);
           }
+        } else {
+          console.log(`[${new Date().toISOString()}] No valid export data found for key ${key}:`, exportData);
         }
       }
 
