@@ -43,6 +43,13 @@ const server = http.createServer((req, res) => {
 
   console.log(`[${new Date().toISOString()}] ${req.method} ${pathname}`);
 
+  // Health check endpoint: /
+  if (pathname === '/' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', message: 'Server is running' }));
+    return;
+  }
+
   // Register endpoint: /register:username
   if (pathname.startsWith('/register:') && req.method === 'GET') {
     const username = pathname.split(':')[1];
