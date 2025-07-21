@@ -540,5 +540,5 @@ document.getElementById('blink-count').addEventListener('click', () => {
 
 // localStorage.removeItem('bbUsername');
 //conver this to browser extension eqivalent
-// browser.storage.local.remove('bbUsername');
+// chrome.storage.local.remove('bbUsername', () => console.log('Username removed from storage'));
 // alert('Local storage cleared for testing purposes. Please refresh the page to start over.');
