@@ -218,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userId = responseData.id; // Store the userId
                 localStorage.setItem('blinkerUID', userId);
                 tooltip.textContent = newUsername;
+                //has the bbUsername been dep
             }).catch(error => {
                 console.error('Error registering username:', error);
                 alert('Error registering username. Please try again later.');
