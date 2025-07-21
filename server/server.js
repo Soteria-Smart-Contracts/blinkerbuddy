@@ -186,9 +186,45 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/all' && req.method === 'GET') {
     try {
       const allUsers = [];
+      
+      // Try different approaches to list users
+      console.log(`[${new Date().toISOString()}] Attempting to list users...`);
+      
+      // Method 1: Try listing with prefix
       const usersListResult = await db.list('user:');
-      const usersList = Array.from(usersListResult || []);
-      console.log(`[${new Date().toISOString()}] Found ${usersList.length} user keys:`, usersList);
+      console.log(`[${new Date().toISOString()}] db.list('user:') result:`, usersListResult);
+      console.log(`[${new Date().toISOString()}] Type of result:`, typeof usersListResult);
+      
+      // Method 2: Try listing all keys
+      const allKeysResult = await db.list();
+      console.log(`[${new Date().toISOString()}] db.list() all keys result:`, allKeysResult);
+      
+      // Convert result to array and filter for user keys
+      let usersList = [];
+      if (usersListResult) {
+        if (Array.isArray(usersListResult)) {
+          usersList = usersListResult;
+        } else if (typeof usersListResult === 'string') {
+          usersList = usersListResult.split('\n').filter(key => key.trim() !== '');
+        } else {
+          usersList = Array.from(usersListResult);
+        }
+      }
+      
+      // If prefix search didn't work, filter from all keys
+      if (usersList.length === 0 && allKeysResult) {
+        let allKeys = [];
+        if (Array.isArray(allKeysResult)) {
+          allKeys = allKeysResult;
+        } else if (typeof allKeysResult === 'string') {
+          allKeys = allKeysResult.split('\n').filter(key => key.trim() !== '');
+        } else {
+          allKeys = Array.from(allKeysResult);
+        }
+        usersList = allKeys.filter(key => key.startsWith('user:'));
+      }
+      
+      console.log(`[${new Date().toISOString()}] Final usersList array:`, usersList);
       
       for (const key of usersList) {
         const user = await db.get(key);
