@@ -72,7 +72,7 @@ const server = http.createServer(async (req, res) => {
     try {
       // Check if username already exists
       const usersListResult = await db.list('user:');
-      const usersList = Array.from(usersListResult || []);
+      const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
       for (const key of usersList) {
         const userData = await db.get(key);
         if (userData && userData.username === username) {
@@ -123,7 +123,7 @@ const server = http.createServer(async (req, res) => {
       let targetUser = null;
       let targetUserId = null;
       const usersListResult = await db.list('user:');
-      const usersList = Array.from(usersListResult || []);
+      const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
       for (const key of usersList) {
         const userData = await db.get(key);
         if (userData && userData.username === username) {
@@ -186,49 +186,11 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/all' && req.method === 'GET') {
     try {
       const allUsers = [];
-      
-      // Try different approaches to list users
-      console.log(`[${new Date().toISOString()}] Attempting to list users...`);
-      
-      // Method 1: Try listing with prefix
       const usersListResult = await db.list('user:');
-      console.log(`[${new Date().toISOString()}] db.list('user:') result:`, usersListResult);
-      console.log(`[${new Date().toISOString()}] Type of result:`, typeof usersListResult);
-      
-      // Method 2: Try listing all keys
-      const allKeysResult = await db.list();
-      console.log(`[${new Date().toISOString()}] db.list() all keys result:`, allKeysResult);
-      
-      // Convert result to array and filter for user keys
-      let usersList = [];
-      if (usersListResult) {
-        if (Array.isArray(usersListResult)) {
-          usersList = usersListResult;
-        } else if (typeof usersListResult === 'string') {
-          usersList = usersListResult.split('\n').filter(key => key.trim() !== '');
-        } else {
-          usersList = Array.from(usersListResult);
-        }
-      }
-      
-      // If prefix search didn't work, filter from all keys
-      if (usersList.length === 0 && allKeysResult) {
-        let allKeys = [];
-        if (Array.isArray(allKeysResult)) {
-          allKeys = allKeysResult;
-        } else if (typeof allKeysResult === 'string') {
-          allKeys = allKeysResult.split('\n').filter(key => key.trim() !== '');
-        } else {
-          allKeys = Array.from(allKeysResult);
-        }
-        usersList = allKeys.filter(key => key.startsWith('user:'));
-      }
-      
-      console.log(`[${new Date().toISOString()}] Final usersList array:`, usersList);
+      const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
       
       for (const key of usersList) {
         const user = await db.get(key);
-        console.log(`[${new Date().toISOString()}] Retrieved user data for key ${key}:`, user);
         if (user) {
           allUsers.push({
             id: user.id,
@@ -237,8 +199,6 @@ const server = http.createServer(async (req, res) => {
           });
         }
       }
-      
-      console.log(`[${new Date().toISOString()}] Final users array:`, allUsers);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -259,7 +219,7 @@ const server = http.createServer(async (req, res) => {
       const now = Date.now();
       const activeExportsList = [];
       const exportsListResult = await db.list('activeExport:');
-      const exportsList = Array.from(exportsListResult || []);
+      const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
       
       for (const key of exportsList) {
         const exportData = await db.get(key);
@@ -293,21 +253,21 @@ const server = http.createServer(async (req, res) => {
     try {
       // Clear all users
       const usersListResult = await db.list('user:');
-      const usersList = Array.from(usersListResult || []);
+      const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
       for (const key of usersList) {
         await db.delete(key);
       }
 
       // Clear all export tokens
       const tokensListResult = await db.list('exportToken:');
-      const tokensList = Array.from(tokensListResult || []);
+      const tokensList = (tokensListResult && tokensListResult.ok && tokensListResult.value) ? tokensListResult.value : [];
       for (const key of tokensList) {
         await db.delete(key);
       }
 
       // Clear all active exports
       const exportsListResult = await db.list('activeExport:');
-      const exportsList = Array.from(exportsListResult || []);
+      const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
       for (const key of exportsList) {
         await db.delete(key);
       }
