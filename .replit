@@ -4,4 +4,4 @@ modules = ["nodejs-20", "web"]
 channel = "stable-24_05"
 
 [run]
-command = "node server/index.js"
+run = "node server/index.js"
