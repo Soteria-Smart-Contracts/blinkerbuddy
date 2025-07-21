@@ -2,6 +2,7 @@ const http = require('http');
 const url = require('url');
 const crypto = require('crypto');
 const Database = require('@replit/database');
+const QRCode = require('qrcode');
 
 // Initialize Replit Database
 const db = new Database();
@@ -188,13 +189,45 @@ const server = http.createServer(async (req, res) => {
         removeExpiredToken(exportToken, targetUserId);
       }, 3 * 60 * 1000);
 
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        username: username,
-        id: targetUserId,
-        token: exportToken,
-        expires_in: 180 // 3 minutes in seconds
-      }));
+      // Generate QR code with the import link
+      const importUrl = `https://blinke.netlify.app/import:${exportToken}`;
+      
+      try {
+        const qrCodeDataURL = await QRCode.toDataURL(importUrl, {
+          errorCorrectionLevel: 'M',
+          type: 'image/png',
+          quality: 0.92,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          },
+          width: 256
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          username: username,
+          id: targetUserId,
+          token: exportToken,
+          expires_in: 180, // 3 minutes in seconds
+          import_url: importUrl,
+          qr_code: qrCodeDataURL
+        }));
+      } catch (qrError) {
+        console.error('Error generating QR code:', qrError);
+        // Fallback without QR code
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          username: username,
+          id: targetUserId,
+          token: exportToken,
+          expires_in: 180, // 3 minutes in seconds
+          import_url: importUrl,
+          qr_code: null,
+          error: 'Failed to generate QR code'
+        }));
+      }
     } catch (error) {
       console.error('Error exporting user:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
