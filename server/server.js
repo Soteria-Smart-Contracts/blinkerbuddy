@@ -1,4 +1,3 @@
-
 const http = require('http');
 const url = require('url');
 const crypto = require('crypto');
@@ -15,19 +14,16 @@ function generateHexId() {
 // Helper function to remove expired token
 async function removeExpiredToken(exportToken, userId) {
   try {
-    // Remove from export tokens
-    await db.delete(`exportToken:${exportToken}`);
-    
     // Remove from active exports
     await db.delete(`activeExport:${exportToken}`);
-    
+
     // Clear token from user record
     const user = await db.get(`user:${userId}`);
     if (user && user.exportToken === exportToken) {
       user.exportToken = null;
       await db.set(`user:${userId}`, user);
     }
-    
+
     console.log(`[${new Date().toISOString()}] Export token expired and removed: ${exportToken.substring(0, 8)}...`);
   } catch (error) {
     console.error('Error removing expired token:', error);
@@ -37,12 +33,12 @@ async function removeExpiredToken(exportToken, userId) {
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
-  
+
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
+
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
@@ -62,7 +58,7 @@ const server = http.createServer(async (req, res) => {
   // Register endpoint: /register:username
   if (pathname.startsWith('/register:') && req.method === 'GET') {
     const username = pathname.split(':')[1];
-    
+
     if (!username || username.trim() === '') {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Username is required' }));
@@ -73,6 +69,10 @@ const server = http.createServer(async (req, res) => {
       // Check if username already exists
       const usersListResult = await db.list('user:');
       const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
+
+      console.log(`[${new Date().toISOString()}] Checking for duplicate username: ${username}`);
+      console.log(`[${new Date().toISOString()}] Found ${usersList.length} existing users`);
+
       for (const key of usersList) {
         const userResult = await db.get(key);
         // Handle both direct user object and wrapped response
@@ -82,8 +82,11 @@ const server = http.createServer(async (req, res) => {
         } else if (userResult && userResult.id) {
           userData = userResult;
         }
-        
-        if (userData && userData.username === username) {
+
+        console.log(`[${new Date().toISOString()}] Checking user ${key}: ${userData ? userData.username : 'no data'}`);
+
+        if (userData && userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
+          console.log(`[${new Date().toISOString()}] Username '${username}' already exists!`);
           res.writeHead(409, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Username already exists' }));
           return;
@@ -119,7 +122,7 @@ const server = http.createServer(async (req, res) => {
   // Export endpoint: /export:username
   if (pathname.startsWith('/export:') && req.method === 'GET') {
     const username = pathname.split(':')[1];
-    
+
     if (!username || username.trim() === '') {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Username is required' }));
@@ -130,11 +133,22 @@ const server = http.createServer(async (req, res) => {
       // Find user by username
       let targetUser = null;
       let targetUserId = null;
+
+      // Check if username already exists
       const usersListResult = await db.list('user:');
       const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
+
       for (const key of usersList) {
-        const userData = await db.get(key);
-        if (userData && userData.username === username) {
+        const userResult = await db.get(key);
+        // Handle both direct user object and wrapped response
+        let userData = null;
+        if (userResult && userResult.ok && userResult.value) {
+          userData = userResult.value;
+        } else if (userResult && userResult.id) {
+          userData = userResult;
+        }
+
+        if (userData && userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
           targetUser = userData;
           targetUserId = userData.id;
           break;
@@ -151,17 +165,7 @@ const server = http.createServer(async (req, res) => {
       const exportToken = generateHexId();
       const expirationTime = Date.now() + (3 * 60 * 1000); // 3 minutes from now
 
-      // Store token in user record and export tokens
-      targetUser.exportToken = exportToken;
-      await db.set(`user:${targetUserId}`, targetUser);
-      
-      await db.set(`exportToken:${exportToken}`, {
-        userId: targetUserId,
-        username: username,
-        expires: expirationTime
-      });
-
-      // Add to active exports (without the secret token)
+      // Store token in active exports (without the secret token)
       await db.set(`activeExport:${exportToken}`, {
         userId: targetUserId,
         username: username,
@@ -178,7 +182,6 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({
         username: username,
         id: targetUserId,
-        blinkscore: targetUser.blinkscore,
         token: exportToken,
         expires_in: 180 // 3 minutes in seconds
       }));
@@ -196,13 +199,13 @@ const server = http.createServer(async (req, res) => {
       const allUsers = [];
       const usersListResult = await db.list('user:');
       const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
-      
+
       console.log(`[${new Date().toISOString()}] Found ${usersList.length} user keys in /all`);
-      
+
       for (const key of usersList) {
         const userResult = await db.get(key);
         console.log(`[${new Date().toISOString()}] Retrieved data for key ${key}:`, userResult);
-        
+
         // Handle both direct user object and wrapped response
         let user = null;
         if (userResult && userResult.ok && userResult.value) {
@@ -210,7 +213,7 @@ const server = http.createServer(async (req, res) => {
         } else if (userResult && userResult.id) {
           user = userResult;
         }
-        
+
         if (user && user.id && user.username) {
           allUsers.push({
             id: user.id,
@@ -244,7 +247,7 @@ const server = http.createServer(async (req, res) => {
       const activeExportsList = [];
       const exportsListResult = await db.list('activeExport:');
       const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
-      
+
       for (const key of exportsList) {
         const exportData = await db.get(key);
         if (exportData) {
