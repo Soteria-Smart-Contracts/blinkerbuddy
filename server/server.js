@@ -18,12 +18,18 @@ const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
     const pathname = parsedUrl.pathname;
     
+    // Log incoming request
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log(`Pathname: ${pathname}`);
+    console.log(`Query params:`, parsedUrl.query);
+    
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
     if (req.method === 'OPTIONS') {
+        console.log('Handling OPTIONS request');
         res.writeHead(200);
         res.end();
         return;
@@ -41,6 +47,7 @@ const server = http.createServer((req, res) => {
         
         // Check if user already exists
         if (database[username]) {
+            console.log(`Registration failed: Username '${username}' already exists`);
             res.writeHead(409, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Username already exists' }));
             return;
@@ -54,6 +61,9 @@ const server = http.createServer((req, res) => {
             blinkscore: 0,
             exportToken: ''
         };
+        
+        console.log(`User registered successfully: ${username} (ID: ${userId})`);
+        console.log(`Current database:`, Object.keys(database));
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -76,6 +86,7 @@ const server = http.createServer((req, res) => {
         
         // Check if user exists
         if (!database[username]) {
+            console.log(`Export failed: User '${username}' not found`);
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'User not found' }));
             return;
@@ -92,9 +103,14 @@ const server = http.createServer((req, res) => {
             expiresAt: expiresAt
         };
         
+        console.log(`Export token generated for '${username}': ${exportToken}`);
+        console.log(`Token expires at: ${new Date(expiresAt).toISOString()}`);
+        console.log(`Active tokens:`, Object.keys(exportTokens).length);
+        
         // Set up automatic cleanup for this specific token after 3 minutes
         setTimeout(() => {
             if (exportTokens[exportToken]) {
+                console.log(`Cleaning up expired token: ${exportToken}`);
                 delete exportTokens[exportToken];
                 if (database[username]) {
                     database[username].exportToken = '';
@@ -111,6 +127,7 @@ const server = http.createServer((req, res) => {
     }
     
     // Default response for other routes
+    console.log(`404 - Endpoint not found: ${pathname}`);
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Endpoint not found' }));
 });
