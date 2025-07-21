@@ -349,6 +349,59 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Load username endpoint: /loadusername:username
+  if (pathname.startsWith('/loadusername:') && req.method === 'GET') {
+    const username = pathname.split(':')[1];
+
+    if (!username || username.trim() === '') {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Username is required' }));
+      return;
+    }
+
+    try {
+      // Find user by username
+      let targetUser = null;
+      const usersListResult = await db.list('user:');
+      const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
+
+      for (const key of usersList) {
+        const userResult = await db.get(key);
+        // Handle both direct user object and wrapped response
+        let userData = null;
+        if (userResult && userResult.ok && userResult.value) {
+          userData = userResult.value;
+        } else if (userResult && userResult.id) {
+          userData = userResult;
+        }
+
+        if (userData && userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
+          targetUser = userData;
+          break;
+        }
+      }
+
+      if (!targetUser) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'User not found' }));
+        return;
+      }
+
+      // Return user data
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        id: targetUser.id,
+        username: targetUser.username,
+        blinkscore: targetUser.blinkscore || 0
+      }));
+    } catch (error) {
+      console.error('Error loading user:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
+    return;
+  }
+
   // Import check endpoint: /importcheck:token
   if (pathname.startsWith('/importcheck:') && req.method === 'GET') {
     const token = pathname.split(':')[1];
