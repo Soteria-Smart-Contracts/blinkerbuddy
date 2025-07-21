@@ -189,15 +189,42 @@ updateBlinkStats();
 checknewday(); // Check if it's a new day to reset blink count
 
 document.addEventListener('DOMContentLoaded', () => {
-   // const username = localStorage.getItem('bbUsername');
+   //the sotrage is checked for an id at the start of the script, so we can use that instead, and then call /loadusername:id to fetch the username of the user
+   //if the id is not empty, prompt to enter username, oth
+   let username;
+   if( userId !== '') {
+        fetch(`https://blinkerbuddy-wedergarten.replit.app/loadusername:${userId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            console.log('Username loaded:', data);
+            //the data comes out as { "id": "2307faa68da8836ec6264427e06d963b", "username": "john123", "blinkscore": 42 }, extract the username and blinkscore
+            const responseData = JSON.parse(data);
+            username = responseData.username; // Store the username
+            document.getElementById('username-tooltip').textContent = username;
+            document.getElementById('blink-score').textContent = responseData.blinkscore || 0; // Set blink score, default to 0 if not present
+            document.getElementById('username-modal').style.display = 'none'; // Hide the modal if username is loaded
+
+        })
+        .catch(error => {
+            console.error('Error loading username:', error);
+            alert('Error loading username. Please try again later.');
+        });
+    }
     const blinkStats = document.getElementById('blink-stats');
     const tooltip = document.getElementById('username-tooltip');
 
-    if (username) {
+    if (userId !== '') {
         tooltip.textContent = username;
     } else {
         document.getElementById('username-modal').style.display = 'flex';
     }
+    //will this work as expected?
+    //answer: yes, it will work as expected, but we need to fetch the username from the server first, which we al
 
     document.getElementById('username-submit').addEventListener('click', () => {
         const usernameInput = document.getElementById('username-input');
