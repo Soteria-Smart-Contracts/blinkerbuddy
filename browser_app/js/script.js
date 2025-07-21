@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 console.log('Username registered:', data);
-                //it will
+                //it will return a json containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"
                 localStorage.setItem('bbUsername', newUsername);
             }).catch(error => {
                 console.error('Error registering username:', error);
