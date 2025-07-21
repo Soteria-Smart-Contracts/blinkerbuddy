@@ -4,7 +4,7 @@ let totalBlinkersToday = 0;
 let highScore = 0;
 let isBlinking = false;
 let plantedTreesCount = 0;
-//see if there is a localstorage value for userId, if
+let userId = localStorage.getItem('bbUsername') || '';
 
 // Web Audio API setup
 let audioCtx = null;
