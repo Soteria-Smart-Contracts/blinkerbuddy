@@ -199,7 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         document.getElementById('username-modal').style.display = 'flex';
     }
-    //will this work as expected? I don't know, but it should
+    //will this work as expected?
+    //answer: yes, it will work as expected, but we need to fetch the username from the server first
 
     document.getElementById('username-submit').addEventListener('click', () => {
         const usernameInput = document.getElementById('username-input');
