@@ -230,27 +230,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const usernameInput = document.getElementById('username-input');
         const newUsername = usernameInput.value.trim();
         if (newUsername) {
-            //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register/username
-            fetch(`https://blinkerbuddy-wedergarten.replit.app/register/${newUsername}`)
+            // First try to load existing username
+            fetch(`https://blinkerbuddy-wedergarten.replit.app/loadusername/${newUsername}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors'
+            })
             .then(response => {
-                if (!response.ok) {
+                if (response.ok) {
+                    return response.json();
+                } else if (response.status === 404) {
+                    // User not found, try to register
+                    return fetch(`https://blinkerbuddy-wedergarten.replit.app/register/${newUsername}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        mode: 'cors'
+                    }).then(registerResponse => {
+                        if (!registerResponse.ok) {
+                            throw new Error('Failed to register username');
+                        }
+                        return registerResponse.json();
+                    });
+                } else {
                     throw new Error('Network response was not ok');
                 }
-                return response.text();
             })
             .then(data => {
-                console.log('Username registered:', data);
-                //it will return a json containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"}
-                const responseData = JSON.parse(data);
-                userId = responseData.id; // Store the userId
+                console.log('Username loaded/registered:', data);
+                userId = data.id; // Store the userId
                 localStorage.setItem('blinkerUID', userId);
                 tooltip.textContent = newUsername;
+                document.getElementById('username-modal').style.display = 'none';
             }).catch(error => {
-                console.error('Error registering username:', error);
-                alert('Error registering username. Please try again later.');
+                console.error('Error with username:', error);
+                alert('Error with username. Please try again later.');
             });
-            tooltip.textContent = newUsername;
-            document.getElementById('username-modal').style.display = 'none';
         }
     });
 
