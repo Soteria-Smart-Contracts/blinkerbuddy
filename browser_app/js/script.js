@@ -539,4 +539,5 @@ document.getElementById('blink-count').addEventListener('click', () => {
 });
 
 chrome.storage.local.remove('bbUsername');
+alert('Local storage cleared for testing purposes.'); // Alert to confirm clearing
 // Clear local storage for testing purposes
