@@ -538,6 +538,6 @@ document.getElementById('blink-count').addEventListener('click', () => {
     }
 });
 
-localStorage.removeItem('bbUsername');
+// localStorage.removeItem('bbUsername');
 // Clear localStorage for testing purposes
-alert('Local storage cleared for testing purposes. Please refresh the page to start over.');
+// alert('Local storage cleared for testing purposes. Please refresh the page to start over.');
