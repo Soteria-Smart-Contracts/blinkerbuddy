@@ -202,7 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(data => {
             console.log('Username loaded:', data);
-            //the data comes out as 
+            //the data comes out as { "id": "2307faa68da8836ec6264427e06d963b", "username": "john123", "blinkscore": 42 }, extract the username
+            const responseData = JSON.parse(data);
 
         })
         .catch(error => {
