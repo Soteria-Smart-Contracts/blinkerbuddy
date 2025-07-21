@@ -202,8 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(data => {
             console.log('Username loaded:', data);
-            //
-            username = data; // Store the username
+            //the data comes out as 
 
         })
         .catch(error => {
