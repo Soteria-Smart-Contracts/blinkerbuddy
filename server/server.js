@@ -306,6 +306,57 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Clear exports endpoint: /clearexports
+  if (pathname === '/clearexports' && req.method === 'GET') {
+    try {
+      // Clear all active exports
+      const exportsListResult = await db.list('activeExport:');
+      const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
+      
+      let deletedCount = 0;
+      for (const key of exportsList) {
+        await db.delete(key);
+        deletedCount++;
+        console.log(`[${new Date().toISOString()}] Deleted export: ${key}`);
+      }
+
+      // Clear export tokens from all users
+      const usersListResult = await db.list('user:');
+      const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
+      
+      let usersUpdated = 0;
+      for (const key of usersList) {
+        const userResult = await db.get(key);
+        let user = null;
+        if (userResult && userResult.ok && userResult.value) {
+          user = userResult.value;
+        } else if (userResult && userResult.id) {
+          user = userResult;
+        }
+        
+        if (user && user.exportToken) {
+          user.exportToken = null;
+          await db.set(key, user);
+          usersUpdated++;
+          console.log(`[${new Date().toISOString()}] Cleared export token from user: ${user.username}`);
+        }
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        message: 'All active exports have been cleared',
+        deleted_exports: deletedCount,
+        users_updated: usersUpdated,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('Error clearing exports:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Internal server error' }));
+    }
+    return;
+  }
+
   // Reset endpoint: /reset (for development purposes)
   if (pathname === '/reset' && req.method === 'GET') {
     try {
