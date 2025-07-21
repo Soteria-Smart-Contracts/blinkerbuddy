@@ -191,7 +191,7 @@ checknewday(); // Check if it's a new day to reset blink count
 document.addEventListener('DOMContentLoaded', () => {
    // const username = localStorage.getItem('bbUsername');
    //call the endpoint, get the username using the blinkeruid if it exists already  /loadusername:id
-    
+    const userId = localStorage.getItem('blinkerUID');
     const blinkStats = document.getElementById('blink-stats');
     const tooltip = document.getElementById('username-tooltip');
 
