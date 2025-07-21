@@ -50,9 +50,9 @@ app.get('/', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Register endpoint: /register:username
-app.get('/register:*', async (req, res) => {
-  const username = req.params[0];
+// Register endpoint: /register/:username
+app.get('/register/:username', async (req, res) => {
+  const username = req.params.username;
 
   if (!username || username.trim() === '') {
     return res.status(400).json({ error: 'Username is required' });
@@ -107,9 +107,9 @@ app.get('/register:*', async (req, res) => {
   }
 });
 
-// Export endpoint: /export:username
-app.get('/export:*', async (req, res) => {
-  const username = req.params[0];
+// Export endpoint: /export/:username
+app.get('/export/:username', async (req, res) => {
+  const username = req.params.username;
 
   if (!username || username.trim() === '') {
     return res.status(400).json({ error: 'Username is required' });
@@ -305,9 +305,9 @@ app.get('/activeexports', async (req, res) => {
   }
 });
 
-// Load username endpoint: /loadusername:username
-app.get('/loadusername:*', async (req, res) => {
-  const username = req.params[0];
+// Load username endpoint: /loadusername/:username
+app.get('/loadusername/:username', async (req, res) => {
+  const username = req.params.username;
 
   if (!username || username.trim() === '') {
     return res.status(400).json({ error: 'Username is required' });
@@ -351,9 +351,9 @@ app.get('/loadusername:*', async (req, res) => {
   }
 });
 
-// Import check endpoint: /importcheck:token
-app.get('/importcheck:*', async (req, res) => {
-  const token = req.params[0];
+// Import check endpoint: /importcheck/:token
+app.get('/importcheck/:token', async (req, res) => {
+  const token = req.params.token;
 
   if (!token || token.trim() === '') {
     return res.status(400).json({ error: 'Token is required' });
