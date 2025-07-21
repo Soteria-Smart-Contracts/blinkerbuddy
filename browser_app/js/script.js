@@ -103,11 +103,7 @@ function playSirenSound(duration = 2000) {
     }
 
     performSweep(context.currentTime); // Initial sweep
-    //simultaniously play blinkalert.mp3 in images/blinkalert.mp3
-    const blinkAlertAudio = new Audio('images/blinkalert.mp3');
-    blinkAlertAudio.volume = 0.5; // Set volume for the alert sound
-    blinkAlertAudio.play().catch(error => console.error('Error playing blink alert sound:', error));
-
+    playBlinkAlertSound();
     sirenSweepInterval = setInterval(() => {
         cycles++;
         if (cycles >= totalCycles) {
@@ -120,6 +116,24 @@ function playSirenSound(duration = 2000) {
 
     // Backup stop based on total duration
     setTimeout(stopSirenSound, duration);
+}
+
+async function playBlinkAlertSound() {
+    const context = getAudioContext();
+    if (!context) return;
+
+    try {
+        const response = await fetch('images/blinkalert.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await context.decodeAudioData(arrayBuffer);
+
+        const source = context.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(context.destination);
+        source.start();
+    } catch (error) {
+        console.error('Error playing blink alert sound:', error);
+    }
 }
 
 function stopSirenSound() {
