@@ -157,13 +157,49 @@ function stopSirenSound() {
 }
 
 // Load saved states from storage
-chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ treeStates: ts, totalBlinkersToday: tb, highScore: hs }) => {
+chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUsername'], ({ treeStates: ts, totalBlinkersToday: tb, highScore: hs, bbUsername: username }) => {
     treeStates = ts || [];
     totalBlinkersToday = tb || 0;
     highScore = hs || 0;
+    const tooltip = document.getElementById('username-tooltip');
+
+    if (username) {
+        tooltip.textContent = username;
+    } else {
+        document.getElementById('username-prompt').style.display = 'block';
+    }
+
     updatePlots();
     updateBlinkStats();
     checknewday(); // Check if it's a new day to reset blink count
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const blinkStats = document.getElementById('blink-stats');
+    const tooltip = document.getElementById('username-tooltip');
+
+    document.getElementById('username-submit').addEventListener('click', () => {
+        const usernameInput = document.getElementById('username-input');
+        const newUsername = usernameInput.value.trim();
+        if (newUsername) {
+            chrome.storage.local.set({ bbUsername: newUsername }, () => {
+                tooltip.textContent = newUsername;
+                document.getElementById('username-prompt').style.display = 'none';
+            });
+        }
+    });
+
+    blinkStats.addEventListener('mouseover', () => {
+        if (tooltip.textContent) {
+            tooltip.style.visibility = 'visible';
+            tooltip.style.opacity = '1';
+        }
+    });
+
+    blinkStats.addEventListener('mouseout', () => {
+        tooltip.style.visibility = 'hidden';
+        tooltip.style.opacity = '0';
+    });
 });
 
 //fix the following console command for testing purposes
@@ -485,3 +521,4 @@ document.getElementById('blink-count').addEventListener('click', () => {
         updateBlinkStats();
     }
 });
+//chrome.storage.local.remove('bbUsername', () => console.log('Username removed from storage'));

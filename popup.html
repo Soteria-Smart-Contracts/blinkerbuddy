@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="src/css/styles.css">
 </head>
 <body>
+  <div id="username-prompt" style="display: none;">
+    Enter a username: <input type="text" id="username-input" maxlength="20">
+    <button id="username-submit">Submit</button>
+  </div>
   <div id="game-container">
     <div class="field">
       <div class="plot" data-index="0"></div>
@@ -17,8 +21,9 @@
       <div class="plot" data-index="5"></div>
     </div>
   </div>
-  <div id="blink-stats">
+  <div id="blink-stats" class="tooltip">
     Today: <span id="blink-count">0</span> | High Score: <span id="high-score">0</span>
+    <span id="username-tooltip" class="tooltiptext"></span>
   </div>
   <button id="reset-button">Reset Trees</button>
   <div id="countdown-overlay">
