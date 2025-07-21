@@ -71,7 +71,8 @@ const server = http.createServer(async (req, res) => {
 
     try {
       // Check if username already exists
-      const usersList = (await db.list('user:')) || [];
+      const usersListResult = await db.list('user:');
+      const usersList = Array.from(usersListResult || []);
       for (const key of usersList) {
         const userData = await db.get(key);
         if (userData && userData.username === username) {
@@ -120,7 +121,8 @@ const server = http.createServer(async (req, res) => {
       // Find user by username
       let targetUser = null;
       let targetUserId = null;
-      const usersList = (await db.list('user:')) || [];
+      const usersListResult = await db.list('user:');
+      const usersList = Array.from(usersListResult || []);
       for (const key of usersList) {
         const userData = await db.get(key);
         if (userData && userData.username === username) {
@@ -183,7 +185,8 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/all' && req.method === 'GET') {
     try {
       const allUsers = [];
-      const usersList = (await db.list('user:')) || [];
+      const usersListResult = await db.list('user:');
+      const usersList = Array.from(usersListResult || []);
       for (const key of usersList) {
         const user = await db.get(key);
         if (user) {
@@ -213,7 +216,8 @@ const server = http.createServer(async (req, res) => {
     try {
       const now = Date.now();
       const activeExportsList = [];
-      const exportsList = (await db.list('activeExport:')) || [];
+      const exportsListResult = await db.list('activeExport:');
+      const exportsList = Array.from(exportsListResult || []);
       
       for (const key of exportsList) {
         const exportData = await db.get(key);
@@ -246,19 +250,22 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/reset' && req.method === 'GET') {
     try {
       // Clear all users
-      const usersList = (await db.list('user:')) || [];
+      const usersListResult = await db.list('user:');
+      const usersList = Array.from(usersListResult || []);
       for (const key of usersList) {
         await db.delete(key);
       }
 
       // Clear all export tokens
-      const tokensList = (await db.list('exportToken:')) || [];
+      const tokensListResult = await db.list('exportToken:');
+      const tokensList = Array.from(tokensListResult || []);
       for (const key of tokensList) {
         await db.delete(key);
       }
 
       // Clear all active exports
-      const exportsList = (await db.list('activeExport:')) || [];
+      const exportsListResult = await db.list('activeExport:');
+      const exportsList = Array.from(exportsListResult || []);
       for (const key of exportsList) {
         await db.delete(key);
       }
