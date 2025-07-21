@@ -201,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(data => {
             console.log('Username loaded:', data)
-            
         })
         .catch(error => {
             console.error('Error loading username:', error);
