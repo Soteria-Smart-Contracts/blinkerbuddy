@@ -4,7 +4,7 @@ let totalBlinkersToday = 0;
 let highScore = 0;
 let isBlinking = false;
 let plantedTreesCount = 0;
-//see i
+//see if there is a localstorage value for user
 
 // Web Audio API setup
 let audioCtx = null;
