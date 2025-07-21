@@ -1,0 +1,133 @@
+body {
+  width: 300px;
+  height: 450px; /* Adjusted height */
+  padding: 20px; /* Added padding */
+  box-sizing: border-box;
+  background-color: #00ff00; /* Changed to green */
+  color: #fff;
+  font-family: 'Courier New', Courier, monospace;
+  border: 2px solid #00cc00; /* External border */
+  border-radius: 10px;
+}
+
+#game-container {
+  width: 95%;
+  border: 1px solid #00cc00;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #00cc00; /* Slightly darker green */
+  overflow: hidden; /* Ensure no overflow */
+}
+
+.field {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Reduced to 3 columns */
+  gap: 10px;
+  justify-content: center; /* Center the grid horizontally */
+  align-items: center; /* Center the grid vertically */
+  margin: 0 auto; /* Center the grid */
+}
+
+.plot {
+  width: 60px;
+  height: 120px; /* Made taller */
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  border: 1px solid #008000;
+  border-radius: 5px;
+  background-color: #009900;
+  padding: 5px; /* Added padding */
+}
+
+.plot:hover {
+  transform: scale(1.1);
+}
+
+.plot .timer {
+  font-size: 16px; /* Consistent font size for "Planted!" */
+  color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.5s ease;
+}
+
+.plot .timer.countdown {
+  font-size: 24px; /* Bigger font size for countdown */
+  font-weight: bold; /* Bolder font for countdown */
+}
+
+.plot.active .timer {
+  background-color: green;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.plot.active {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 120"><rect x="25" y="40" width="10" height="70" fill="saddlebrown"/><polygon points="10,60 50,60 30,30" fill="forestgreen"/><polygon points="15,40 45,40 30,10" fill="forestgreen"/><polygon points="20,20 40,20 30,0" fill="forestgreen"/></svg>');
+  background-size: cover;
+}
+
+#reset-button {
+  display: block;
+  margin: 20px auto;
+  margin-bottom: 30px;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #fff;
+  background-color: #ff0000;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#reset-button:hover {
+  background-color: #cc0000;
+}
+
+#blink-stats {
+  text-align: center;
+  font-size: 16px;
+  color: #fff;
+  margin-top: 10px;
+  border: 1px solid #008000;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #00cc00; /* Slightly darker green */
+}
+
+#blink-stats span {
+  font-weight: bold;
+}
+
+#countdown-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#countdown-overlay .countdown-text {
+  font-size: 48px;
+  font-weight: bold;
+  color: #fff;
+}
+
+#username-prompt {
+  padding: 10px;
+  text-align: center;
+  background-color: #00cc00;
+}
+
+#username-display {
+  font-weight: normal;
+}
