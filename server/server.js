@@ -52,16 +52,35 @@ const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
 
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Set CORS headers for blinke.netlify.app only
+  const origin = req.headers.origin;
+  if (origin === 'https://blinke.netlify.app') {
+    res.setHeader('Access-Control-Allow-Origin', 'https://blinke.netlify.app');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-App-Source');
+  }
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
     return;
+  }
+
+  // Validate request source (skip for health check)
+  if (pathname !== '/') {
+    const userAgent = req.headers['user-agent'] || '';
+    const referer = req.headers.referer || '';
+    
+    // Block obvious console/curl requests
+    if (userAgent.includes('curl') || 
+        userAgent.includes('wget') || 
+        userAgent.includes('PostmanRuntime') ||
+        (!referer.includes('blinke.netlify.app') && !referer.includes('localhost') && !referer.includes('127.0.0.1'))) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Access denied' }));
+      return;
+    }
   }
 
   console.log(`[${new Date().toISOString()}] ${req.method} ${pathname}`);
