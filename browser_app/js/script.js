@@ -76,7 +76,7 @@ function exportfunc() {
         alert('Error exporting data. Please try again later.');
     });
 }
-// Add an export button to the HTML
+// Add an import function to handle importing data from a QR code via c
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
     const context = getAudioContext();
