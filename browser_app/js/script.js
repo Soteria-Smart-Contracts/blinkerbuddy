@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-//now if I go to the website with a id as query parameter, it will import the data from the server
+//now if I go to the website with a id as query parameter, it will import the data from the server, like blinker.netlify.app/import?id=5c7578e007ec776bf4449e0911eccd27
 
 //fix the following console command for testing purposes
 //chrome.storage.local.get([highScore])
