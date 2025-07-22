@@ -25,7 +25,7 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-//create function exportfunc() which is set to an aonlick to export the button, to hit the api which is already found and call /export/
+//create function exportfunc() which is set to an aonlick to export the button, to hit the api which is already found and call /export/:username
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
     const context = getAudioContext();
