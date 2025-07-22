@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
                     //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
                     //the treestate is a string which needs to be parsed into an array, one liner, i know its a string already
-                    newtree
+                    newtreeStates = data.treeState ? JSON.parse(data.treeState) : []; // Parse tree states from string
                     treeStates = data.treeStates || []; // Load tree states
                     updatePlots(); // Update the plots with loaded tree states
 
