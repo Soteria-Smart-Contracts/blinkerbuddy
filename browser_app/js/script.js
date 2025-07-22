@@ -282,6 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('username-tooltip').textContent = username;
                     document.getElementById('blink-count').textContent = data.blinkscore || 0; // Set blink score
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
+                    //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
+
                 })
                 .catch(error => {
                     console.error('Error loading username:', error);
