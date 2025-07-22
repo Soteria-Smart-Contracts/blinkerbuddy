@@ -237,86 +237,104 @@ treeStates = JSON.parse(localStorage.getItem('treeStates')) || [];
 updatePlots();
 
 document.addEventListener('DOMContentLoaded', () => {
-   //the sotrage is checked for an id at the start of the script, so we can use that instead, and then call /loadusername:id to fetch the username of the user
-   //if the id is not empty, prompt to enter username, oth
-   let username;
-   if( userId !== '') {
-        fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/loaduserid/${userId}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.text();
-        })
-        .then(data => {
-            console.log('Username loaded:', data);
-            //the data comes out as { "id": "2307faa68da8836ec6264427e06d963b", "username": "john123", "blinkscore": 42 }, extract the username and blinkscore
-            const responseData = JSON.parse(data);
-            username = responseData.username; // Store the username
-            document.getElementById('username-tooltip').textContent = username;
-            document.getElementById('blink-count').textContent = responseData.blinkscore || 0; // Set blink score, default to 0 if not present
-            document.getElementById('username-modal').style.display = 'none'; // Hide the modal if username is loaded
-        })
-        .catch(error => {
-            console.error('Error loading username:', error);
-            //if this happens we should prompt the user to enter a username
-            document.getElementById('username-modal').style.display = 'flex'; // Show the modal to enter username
-            username = ''; // Reset username if loading fails
-            document.getElementById('username-tooltip').textContent = ''; // Clear tooltip
-            // Optionally, you can alert the user about the error
-            // but for now, we will just show the modal
-        });
-    }
-    const blinkStats = document.getElementById('blink-stats');
-    const tooltip = document.getElementById('username-tooltip');
+    const urlParams = new URLSearchParams(window.location.search);
+    const importId = urlParams.get('id'); // Check if there's an 'id' parameter in the URL
 
-    if (userId !== '') {
-        tooltip.textContent = username;
-    } else {
-        document.getElementById('username-modal').style.display = 'flex';
-    }
-    //will this work as expected?
-    //answer: yes, it will work as expected, but we need to fetch the username from the server first, which we al
-
-    document.getElementById('username-submit').addEventListener('click', () => {
-        const usernameInput = document.getElementById('username-input');
-        const newUsername = usernameInput.value.trim();
-        if (newUsername) {
-            //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register/username
-            fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/register/${encodeURIComponent(newUsername)}`)
+    if (importId) {
+        // If there's an 'id' parameter, import the data
+        fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/import/${importId}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                return response.text();
+                return response.json();
             })
             .then(data => {
-                console.log('Username registered:', data);
-                //it will return a json containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"}
-                const responseData = JSON.parse(data);
-                userId = responseData.id; // Store the userId
+                console.log('Imported data:', data);
+                // Update the username and blink score from the imported data
+                userId = data.id;
                 localStorage.setItem('blinkerUID', userId);
-                tooltip.textContent = newUsername;
-            }).catch(error => {
-                console.error('Error registering username:', error);
-                alert('Error registering username. Please try again later.');
+                document.getElementById('username-tooltip').textContent = data.username;
+                document.getElementById('blink-count').textContent = data.blinkscore || 0;
+                document.getElementById('username-modal').style.display = 'none'; // Hide the modal
+            })
+            .catch(error => {
+                console.error('Error importing data:', error);
+                alert('Error importing data. Please try again later.');
             });
-            tooltip.textContent = newUsername;
-            document.getElementById('username-modal').style.display = 'none';
+    } else {
+        // If no 'id' parameter, proceed with the normal flow
+        let username;
+        if (userId !== '') {
+            fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/loaduserid/${userId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Username loaded:', data);
+                    username = data.username; // Store the username
+                    document.getElementById('username-tooltip').textContent = username;
+                    document.getElementById('blink-count').textContent = data.blinkscore || 0; // Set blink score
+                    document.getElementById('username-modal').style.display = 'none'; // Hide the modal
+                })
+                .catch(error => {
+                    console.error('Error loading username:', error);
+                    document.getElementById('username-modal').style.display = 'flex'; // Show the modal
+                    username = ''; // Reset username if loading fails
+                    document.getElementById('username-tooltip').textContent = ''; // Clear tooltip
+                });
         }
-    });
 
-    blinkStats.addEventListener('mouseover', () => {
-        if (tooltip.textContent) {
-            tooltip.style.visibility = 'visible';
-            tooltip.style.opacity = '1';
+        const blinkStats = document.getElementById('blink-stats');
+        const tooltip = document.getElementById('username-tooltip');
+
+        if (userId !== '') {
+            tooltip.textContent = username;
+        } else {
+            document.getElementById('username-modal').style.display = 'flex';
         }
-    });
 
-    blinkStats.addEventListener('mouseout', () => {
-        tooltip.style.visibility = 'hidden';
-        tooltip.style.opacity = '0';
-    });
+        document.getElementById('username-submit').addEventListener('click', () => {
+            const usernameInput = document.getElementById('username-input');
+            const newUsername = usernameInput.value.trim();
+            if (newUsername) {
+                fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/register/${encodeURIComponent(newUsername)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Username registered:', data);
+                        userId = data.id; // Store the userId
+                        localStorage.setItem('blinkerUID', userId);
+                        tooltip.textContent = newUsername;
+                    })
+                    .catch(error => {
+                        console.error('Error registering username:', error);
+                        alert('Error registering username. Please try again later.');
+                    });
+                tooltip.textContent = newUsername;
+                document.getElementById('username-modal').style.display = 'none';
+            }
+        });
+
+        blinkStats.addEventListener('mouseover', () => {
+            if (tooltip.textContent) {
+                tooltip.style.visibility = 'visible';
+                tooltip.style.opacity = '1';
+            }
+        });
+
+        blinkStats.addEventListener('mouseout', () => {
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.opacity = '0';
+        });
+    }
 });
 
 //fix the following console command for testing purposes
