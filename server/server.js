@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 
 // Single, comprehensive CORS middleware that prevents redirects
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from origin: ${req.headers.origin || 'no-origin'}`);
+  console.log(`[${new Date().toISOString()}] CORS MIDDLEWARE: ${req.method} ${req.url} from origin: ${req.headers.origin || 'no-origin'}`);
 
   // Set all necessary CORS headers
   res.header('Access-Control-Allow-Origin', '*');
@@ -21,6 +21,8 @@ app.use((req, res, next) => {
   res.header('Access-Control-Max-Age', '86400');
   res.header('Access-Control-Expose-Headers', '*');
   res.header('Access-Control-Allow-Private-Network', 'true');
+
+  console.log(`[${new Date().toISOString()}] CORS HEADERS SET for ${req.url}`);
 
   // Handle preflight requests immediately - NO REDIRECTS
   if (req.method === 'OPTIONS') {
