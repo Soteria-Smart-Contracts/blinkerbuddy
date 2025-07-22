@@ -359,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Update the plots to reflect the current state of trees
 function updatePlots() {
-    console.log(treeStates)
+    console.log(treeStates);
     plantedTreesCount = 0; // Reset plantedTreesCount
     // Clear all plots
     plots.forEach(plot => {
