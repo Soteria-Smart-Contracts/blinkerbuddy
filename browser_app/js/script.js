@@ -571,19 +571,19 @@ document.getElementById('reset-button').addEventListener('click', () => {
     updatePlots();
 });
 
-// Event listener for reducing daily blinker count
-document.getElementById('blink-count').addEventListener('click', () => {
-    if (totalBlinkersToday > 0) {
-        totalBlinkersToday--;
-        if (totalBlinkersToday > highScore) {
-            highScore = totalBlinkersToday;
-        }
-        localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
-        localStorage.setItem('highScore', highScore);
-        console.log('Daily blink count reduced!');
-        updateBlinkStats();
-    }
-});
+// // Event listener for reducing daily blinker count
+// document.getElementById('blink-count').addEventListener('click', () => {
+//     if (totalBlinkersToday > 0) {
+//         totalBlinkersToday--;
+//         if (totalBlinkersToday > highScore) {
+//             highScore = totalBlinkersToday;
+//         }
+//         localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
+//         localStorage.setItem('highScore', highScore);
+//         console.log('Daily blink count reduced!');
+//         updateBlinkStats();
+//     }
+// });
 
 // localStorage.removeItem('bbUsername');
 //conver this to browser extension eqivalent
