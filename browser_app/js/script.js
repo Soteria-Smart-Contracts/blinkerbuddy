@@ -470,6 +470,7 @@ function startTimer(plot, index) {
             if (userId) {
                 fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/blink/${userId}`, {
                     method: 'GET',
+                    query: `?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`,
                     headers: {
                         'Content-Type': 'application/json'
                     },                })
