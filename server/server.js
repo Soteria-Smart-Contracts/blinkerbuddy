@@ -4,7 +4,7 @@ const app = express();
 
 // Enable CORS for all origins including Netlify
 app.use(cors({
-    origin: ['https://blinke.netlify.app', '*'],
+    origin: [ '*'],
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: false
