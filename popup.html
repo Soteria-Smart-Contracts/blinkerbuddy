@@ -7,9 +7,12 @@
   <link rel="stylesheet" href="src/css/styles.css">
 </head>
 <body>
-  <div id="username-prompt" style="display: none;">
-    Enter a username: <input type="text" id="username-input" maxlength="20">
-    <button id="username-submit">Submit</button>
+  <div id="username-modal" style="display: none;">
+    <div id="username-modal-content">
+      <p>Enter a username:</p>
+      <input type="text" id="username-input" maxlength="20">
+      <button id="username-submit">Submit</button>
+    </div>
   </div>
   <div id="game-container">
     <div class="field">
@@ -22,10 +25,11 @@
     </div>
   </div>
   <div id="blink-stats" class="tooltip">
-    Today: <span id="blink-count">0</span> | High Score: <span id="high-score">0</span>
+    All Time: <span id="blink-count">0</span>
     <span id="username-tooltip" class="tooltiptext"></span>
   </div>
   <button id="reset-button">Reset Trees</button>
+  <button onclick="exportfunc()">Export Account</button>
   <div id="countdown-overlay">
     <div class="countdown-text" id="countdown-text"></div>
   </div>

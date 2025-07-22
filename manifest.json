@@ -3,7 +3,10 @@
     "name": "Blinker Game",
     "version": "1.0",
     "description": "A game to encourage blinking.",
-    "permissions": ["storage"],
+"permissions": [
+  "storage",
+  "https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/*"
+],
     "background": {
       "service_worker": "src/js/background.js"
     },
