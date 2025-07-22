@@ -25,7 +25,58 @@ document.addEventListener('visibilitychange', () => {
 });
 
 //create function exportfunc() which is set to an aonlick to export the button, to hit the api which is already found and call /export/:username, which will return { "username": "dtz", "id": "7f09fadef4423da0801d930ab7ba7424", "token": "5c7578e007ec776bf4449e0911eccd27", "expires_in": 180, "import_url": "https://blinke.netlify.app/import:5c7578e007ec776bf4449e0911eccd27", "qr_code": "data:image/png;base64,iV...etc"}
-//you need to display the qr code in the plot section for 45 seconds, and then remove and return ev
+//you need to display the qr code in the plot section for 45 seconds, and then remove and return evything to normal
+function exportFunc() {
+    const username = document.getElementById('username-tooltip').textContent;
+    if (!username) {
+        alert('Please enter a username first!');
+        return;
+    }
+    fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/export/${encodeURIComponent(username)}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    }
+    )
+    .then(data => {
+        console.log('Export data:', data);
+        // Display the QR code in the plot section
+        const qrCodeImage = document.createElement('img');
+        qrCodeImage.src = data.qr_code;
+        qrCodeImage.style.width = '200px'; // Set a reasonable size for the QR code
+        qrCodeImage.style.height = 'auto';
+        qrCodeImage.style.margin = '10px auto';
+        qrCodeImage.alt = 'QR Code for Blink Buddy Export';
+
+        // over lay it in the entire plot section and then remove it after 45 seconds, simple as that
+        const plotOverlay = document.createElement('div');
+        plotOverlay.style.position = 'absolute';
+        plotOverlay.style.top = '0';
+        plotOverlay.style.left = '0';
+        plotOverlay.style.width = '100%';
+        plotOverlay.style.height = '100%';
+        plotOverlay.style.display = 'flex';
+        plotOverlay.style.justifyContent = 'center';
+        plotOverlay.style.alignItems = 'center';
+        plotOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        plotOverlay.style.zIndex = '1000';
+
+        plotOverlay.appendChild(qrCodeImage);
+        document.body.appendChild(plotOverlay);
+
+        setTimeout(() => {
+            document.body.removeChild(plotOverlay);
+        }, 10000); // Remove the overlay after 45 seconds
+    }
+    )
+    .catch(error => {
+        console.error('Error exporting data:', error);
+        alert('Error exporting data. Please try again later.');
+    });
+}
+// Add an export button to the HTML
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
     const context = getAudioContext();
