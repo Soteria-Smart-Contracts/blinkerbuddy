@@ -210,7 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('username-tooltip').textContent = username;
             document.getElementById('blink-count').textContent = responseData.blinkscore || 0; // Set blink score, default to 0 if not present
             document.getElementById('username-modal').style.display = 'none'; // Hide the modal if username is loaded
-
         })
         .catch(error => {
             console.error('Error loading username:', error);
