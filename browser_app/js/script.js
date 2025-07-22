@@ -523,23 +523,23 @@ function getRandomGnomeMessage() {
     return messages[Math.floor(Math.random() * messages.length)];
 }
 
-// Reset daily blink count at midnight
-function checknewday() {
-    //see if the current date is different from the last saved date, if there is no saved date, or if the last saved date is more than 24 hours ago
-    // then reset the daily blink count
-    const now = new Date();
-    const lastResetDate = localStorage.getItem('lastResetDate');
-    if (!lastResetDate || new Date(lastResetDate).toDateString() !== now.toDateString()) {
-        totalBlinkersToday = 0;
-        localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
-        localStorage.setItem('lastResetDate', now.toISOString());
-        console.log('Daily blink count reset!');
-    }
-    else {
-        console.log('Daily blink count already reset for today.');
-    }
-    updateBlinkStats();
-}
+// // Reset daily blink count at midnight
+// function checknewday() {
+//     //see if the current date is different from the last saved date, if there is no saved date, or if the last saved date is more than 24 hours ago
+//     // then reset the daily blink count
+//     const now = new Date();
+//     const lastResetDate = localStorage.getItem('lastResetDate');
+//     if (!lastResetDate || new Date(lastResetDate).toDateString() !== now.toDateString()) {
+//         totalBlinkersToday = 0;
+//         localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
+//         localStorage.setItem('lastResetDate', now.toISOString());
+//         console.log('Daily blink count reset!');
+//     }
+//     else {
+//         console.log('Daily blink count already reset for today.');
+//     }
+//     updateBlinkStats();
+// }
 
 // Event listeners for plots
 plots.forEach((plot, index) => {
