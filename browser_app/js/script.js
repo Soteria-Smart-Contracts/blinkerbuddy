@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
    //if the id is not empty, prompt to enter username, oth
    let username;
    if( userId !== '') {
-        fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/register/${userId}`)
+        fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/loadusername/${userId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
