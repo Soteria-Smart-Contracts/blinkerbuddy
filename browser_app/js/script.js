@@ -415,7 +415,6 @@ function startBlinkerAnimation(plot) {
             stopSirenSound(); // Stop the siren explicitly
             overlay.style.display = 'none';
             isBlinking = false;
-            updateBlinkStats();
             checkAllTreesFilled();
             // The following setTimeout seems to be for tree death, not directly related to plot argument.
             // If 'index' is needed here, it must be passed to startBlinkerAnimation.
