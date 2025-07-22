@@ -162,7 +162,6 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ t
     totalBlinkersToday = tb || 0;
     highScore = hs || 0;
 
-
     updatePlots();
     updateBlinkStats();
     checknewday(); // Check if it's a new day to reset blink count
