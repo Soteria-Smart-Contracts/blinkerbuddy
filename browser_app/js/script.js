@@ -534,7 +534,6 @@ function checknewday() {
         localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
         localStorage.setItem('lastResetDate', now.toISOString());
         console.log('Daily blink count reset!');
-        updateBlinkStats();
     }
     else {
         console.log('Daily blink count already reset for today.');
