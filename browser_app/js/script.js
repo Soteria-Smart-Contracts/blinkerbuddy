@@ -389,7 +389,7 @@ function startTimer(plot, index) {
             //send an api request to the server to update the blink count for the user by doing /blink/:id
             if (userId) {
                 fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/blink/${userId}`, {
-                    method: 'POST',
+                    method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
                     },
