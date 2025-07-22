@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
                     //the treestate is a string which needs to be parsed into an array, one liner, i know its a string already
                     newtreeStates = data.treeState ? JSON.parse(data.treeState) : []; // Parse tree states from string
-                    treeStates = data.treeStates || []; // Load tree states
+                    treeStates = newtreeStates; // Assign to global treeStates
                     updatePlots(); // Update the plots with loaded tree states
 
                 })
