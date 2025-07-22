@@ -338,7 +338,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 //now if I go to the website with a id as query parameter, it will import the data from the server, like blinker.netlify.app/?id=5c7578e007ec776bf4449e0911eccd27
-//will this work with param right after the slash? like blinker.netlify.app/5c7578e007ec776bf4449e0911eccd27
+//will this work with param right after the slash? like blinker.netlify.app/?5c7578e007ec776bf4449e0911eccd27
+//answer: 
 
 //fix the following console command for testing purposes
 //chrome.storage.local.get([highScore])
