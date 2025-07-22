@@ -502,4 +502,3 @@ document.getElementById('blink-count').addEventListener('click', () => {
         updateBlinkStats();
     }
 });
-//chrome.storage.local.remove('bbUsername', () => console.log('Username removed from storage'));
