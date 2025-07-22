@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const responseData = JSON.parse(data);
             username = responseData.username; // Store the username
             document.getElementById('username-tooltip').textContent = username;
-            document.getElementById('blink-score').textContent = responseData.blinkscore || 0; // Set blink score, default to 0 if not present
+            document.getElementById('blink-count').textContent = responseData.blinkscore || 0; // Set blink score, default to 0 if not present
             document.getElementById('username-modal').style.display = 'none'; // Hide the modal if username is loaded
 
         })
