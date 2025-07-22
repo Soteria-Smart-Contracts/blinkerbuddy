@@ -24,7 +24,7 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-//create function exportfunc() which is set to an aonlick to export the button, to hit the api which is already found and call /export/:username, which will return { "username": "dtz", "id": "7f09fadef4423da0801d930ab7ba7424", "token": "5c7578e007ec776bf4449e0911eccd27", "expires_in": 180, "import_url": "https://blinke.netlify.app/import:5c7578e007ec776bf4449e0911eccd27", "qr_code": "data:image/png;base64,iV"
+//create function exportfunc() which is set to an aonlick to export the button, to hit the api which is already found and call /export/:username, which will return { "username": "dtz", "id": "7f09fadef4423da0801d930ab7ba7424", "token": "5c7578e007ec776bf4449e0911eccd27", "expires_in": 180, "import_url": "https://blinke.netlify.app/import:5c7578e007ec776bf4449e0911eccd27", "qr_code": "data:image/png;base64,iV...etc"}
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
     const context = getAudioContext();
