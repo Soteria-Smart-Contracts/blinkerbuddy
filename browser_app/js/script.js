@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('blink-count').textContent = data.blinkscore || 0; // Set blink score
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
                     //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
-                    treeStates = data.treeState || []; // Load tree states
+                    treeStates = data.treeStates || []; // Load tree states
 
                 })
                 .catch(error => {
