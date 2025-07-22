@@ -22,3 +22,8 @@ app.listen(process.env.PORT || 5000, '0.0.0.0', () => {
 
 //how to fetch http://localhost:5000/keepalive from console?
 //// You can use the fetch API in the browser console or any HTTP client like Postman.
+// Example using fetch API in the browser console:
+// fetch('http://localhost:5000/keepalive')
+//     .then(response => response.text())
+//     .then(data => console.log(data))
+// Example using Postman:
