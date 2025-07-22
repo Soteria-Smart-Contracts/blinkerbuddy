@@ -77,75 +77,89 @@ function exportfunc() {
     });
 }
 // Add an import function to handle importing data from a QR code via camera
-function importfunc() {
-    const video = document.createElement('video');
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
+async function importfunc() {
+    /* --------------- DOM setup --------------- */
     const overlay = document.createElement('div');
-    const text = document.createElement('div');
-
-    overlay.style.position = 'absolute';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.display = 'flex';
-    overlay.style.justifyContent = 'center';
-    overlay.style.alignItems = 'center';
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    overlay.style.zIndex = '1000';
-
-    text.style.color = 'white';
-    text.style.fontSize = '24px';
-    text.style.marginBottom = '20px';
+    const text      = document.createElement('div');
+    const video     = document.createElement('video');
+  
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      inset: '0',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      background: 'rgba(0,0,0,.8)',
+      zIndex: 1000,
+      color: '#fff',
+      fontSize: '24px'
+    });
     text.textContent = 'Scan the QR code to import data';
-
-    overlay.appendChild(text);
-    overlay.appendChild(video);
-    document.body.appendChild(overlay);
-
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then((stream) => {
-            video.srcObject = stream;
-            video.play();
-
-            const interval = setInterval(() => {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-
-                if (code) {
-                    clearInterval(interval);
-                    stream.getTracks().forEach((track) => track.stop());
-                    document.body.removeChild(overlay);
-
-                    fetch(code.data)
-                        .then((response) => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
-                            }
-                            return response.json();
-                        })
-                        .then((data) => {
-                            console.log('Imported data:', data);
-                            alert('Data imported successfully!');
-                        })
-                        .catch((error) => {
-                            console.error('Error importing data:', error);
-                            alert('Error importing data. Please try again.');
-                        });
-                }
-            }, 500);
-        })
-        .catch((error) => {
-            console.error('Error accessing camera:', error);
-            alert('Error accessing camera. Please ensure camera permissions are enabled.');
-        });
-}
-
+    overlay.append(text, video);
+    document.body.append(overlay);
+  
+    /* --------------- Stream helpers --------------- */
+    let stream;
+    const stop = () => {
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      overlay.remove();
+    };
+  
+    /* --------------- Camera permission & stream --------------- */
+    try {
+      // Modern spec-compliant constraints
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+  
+      video.playsInline = true;      // iOS
+      video.muted = true;            // autoplay policy
+      video.srcObject = stream;
+      await video.play();
+  
+      /* --------------- QR loop --------------- */
+      const canvas  = document.createElement('canvas');
+      const ctx     = canvas.getContext('2d');
+  
+      const scan = () => {
+        if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+          return requestAnimationFrame(scan);
+        }
+  
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+  
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const qr   = window.jsQR && window.jsQR(data.data, data.width, data.height);
+  
+        if (qr) {
+          stop();                                 // Stop camera & overlay
+          fetch(qr.data)
+            .then(r => r.json())
+            .then(json => {
+              console.log('Imported data:', json);
+              alert('Data imported successfully!');
+            })
+            .catch(err => {
+              console.error(err);
+              alert('Error importing data. Please try again.');
+            });
+          return;
+        }
+        requestAnimationFrame(scan);
+      };
+      scan();
+    } catch (err) {
+      console.error(err);
+      stop();
+      alert(
+        'Unable to access the camera. ' +
+        'Please ensure you have granted camera permission and are using HTTPS.'
+      );
+    }
+  }
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
     const context = getAudioContext();
