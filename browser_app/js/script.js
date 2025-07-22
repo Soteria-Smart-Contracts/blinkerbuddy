@@ -185,7 +185,6 @@ function stopSirenSound() {
 treeStates = JSON.parse(localStorage.getItem('treeStates')) || [];
 highScore = parseInt(localStorage.getItem('highScore')) || 0;
 updatePlots();
-updateBlinkStats();
 checknewday(); // Check if it's a new day to reset blink count
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -291,7 +290,7 @@ function updatePlots() {
         plotElement.querySelector('.timer').style.color = 'cyan';
 
     });
-    updateBlinkStats();
+
 }
 
 
