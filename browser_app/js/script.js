@@ -386,6 +386,7 @@ function startTimer(plot, index) {
             timerElement.textContent = 'Planted!';
             timerElement.style.fontSize = '16px';
             startBlinkerAnimation(plot);
+            //send an api request to the server to update the blink count for the user
         }
     }, 100);
 }
