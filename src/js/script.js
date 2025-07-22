@@ -176,7 +176,6 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUs
 
 document.addEventListener('DOMContentLoaded', () => {
     const blinkStats = document.getElementById('blink-stats');
-    const tooltip = document.getElementById('username-tooltip');
 
     document.getElementById('username-submit').addEventListener('click', () => {
         const usernameInput = document.getElementById('username-input');
