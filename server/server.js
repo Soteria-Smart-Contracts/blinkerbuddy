@@ -2,7 +2,6 @@ const express = require('express');
 const crypto = require('crypto');
 const Database = require('@replit/database');
 const QRCode = require('qrcode');
-const cors = require('cors');
 
 // Initialize Replit Database
 const db = new Database();
@@ -10,8 +9,29 @@ const db = new Database();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// Single, comprehensive CORS middleware that prevents redirects
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} from origin: ${req.headers.origin || 'no-origin'}`);
+
+  // Set all necessary CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+  res.header('Access-Control-Allow-Headers', '*');
+  res.header('Access-Control-Allow-Credentials', 'false');
+  res.header('Access-Control-Max-Age', '86400');
+  res.header('Access-Control-Expose-Headers', '*');
+  res.header('Access-Control-Allow-Private-Network', 'true');
+
+  // Handle preflight requests immediately - NO REDIRECTS
+  if (req.method === 'OPTIONS') {
+    console.log(`[${new Date().toISOString()}] Handled OPTIONS preflight request for ${req.url}`);
+    return res.status(200).end();
+  }
+
+  next();
+});
+
+// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
