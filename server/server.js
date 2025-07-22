@@ -2,8 +2,6 @@ const express = require('express');
 const crypto = require('crypto');
 const Database = require('@replit/database');
 const QRCode = require('qrcode');
-//load cors
-const cors = require('cors');
 
 // Initialize Replit Database
 const db = new Database();
@@ -12,10 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware - this is the key part that fixes CORS!
-app.use(cors({
-  origin: "https://slug-panel.onrender.com"
-}))
-app.options('*', cors())
+app.use(require('cors')()); // Simple cors setup like in your working example
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
