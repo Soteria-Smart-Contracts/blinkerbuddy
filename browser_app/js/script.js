@@ -471,24 +471,20 @@ function startTimer(plot, index) {
             startBlinkerAnimation(plot);
             //send an api request to the server to update the blink count for the user by doing /blink/:id
             if (userId) {
-                fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/blink/${userId}`, {
-                    method: 'GET',
-                    query: `?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
+                const url =
+                `https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
+              
+              fetch(url, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+              })
+                .then(r => {
+                  if (!r.ok) throw new Error('Network response was not ok');
+                  return r.json();
                 })
-                .then(data => {
-                    console.log('Blink count updated:', data);
-                })
-                .catch(error => {
-                    console.error('Error updating blink count:', error);
-                });
+                .then(data => console.log('Blink count updated:', data))
+                .catch(err => console.error('Error updating blink count:', err));
+              
             }
         }
     }, 100);
