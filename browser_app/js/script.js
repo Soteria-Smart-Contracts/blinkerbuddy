@@ -243,25 +243,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (importId) {
         // If there's an 'id' parameter, import the data
         fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/import/${importId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Imported data:', data);
-                // Update the username and blink score from the imported data
-                userId = data.id;
-                localStorage.setItem('blinkerUID', userId);
-                document.getElementById('username-tooltip').textContent = data.username;
-                document.getElementById('blink-count').textContent = data.blinkscore || 0;
-                document.getElementById('username-modal').style.display = 'none'; // Hide the modal
-            })
-            .catch(error => {
-                console.error('Error importing data:', error);
-                alert('Error importing data. Please try again later.');
-            });
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Imported data:', data);
+      
+          // The server wraps the user object in `user`
+          const { user } = data;
+          const userId = user.id;
+      
+          localStorage.setItem('blinkerUID', userId);
+          document.getElementById('username-tooltip').textContent = user.username;
+          document.getElementById('blink-count').textContent = user.blinkscore || 0;
+          document.getElementById('username-modal').style.display = 'none'; // Hide the modal
+        })
+        .catch(error => {
+          console.error('Error importing data:', error);
+          alert('Error importing data. Please try again later.');
+        });
     } else {
         // If no 'id' parameter, proceed with the normal flow
         let username;
