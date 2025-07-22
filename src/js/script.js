@@ -177,17 +177,6 @@ chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUs
 document.addEventListener('DOMContentLoaded', () => {
     const blinkStats = document.getElementById('blink-stats');
 
-    document.getElementById('username-submit').addEventListener('click', () => {
-        const usernameInput = document.getElementById('username-input');
-        const newUsername = usernameInput.value.trim();
-        if (newUsername) {
-            chrome.storage.local.set({ bbUsername: newUsername }, () => {
-                tooltip.textContent = newUsername;
-                document.getElementById('username-prompt').style.display = 'none';
-            });
-        }
-    });
-
     blinkStats.addEventListener('mouseover', () => {
         if (tooltip.textContent) {
             tooltip.style.visibility = 'visible';
