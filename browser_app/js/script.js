@@ -392,9 +392,7 @@ function startTimer(plot, index) {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ blinkCount: currentCount + 1 })
-                })
+                    },                })
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
