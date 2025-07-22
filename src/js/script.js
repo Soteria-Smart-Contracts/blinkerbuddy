@@ -156,26 +156,25 @@ function stopSirenSound() {
     }
 }
 
+let userId = '';
+
 // Load saved states from storage
-chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUsername'], ({ treeStates: ts, totalBlinkersToday: tb, highScore: hs, bbUsername: username }) => {
-    treeStates = ts || [];
-    totalBlinkersToday = tb || 0;
-    highScore = hs || 0;
-    const tooltip = document.getElementById('username-tooltip');
-
-    if (username) {
-        tooltip.textContent = username;
-    } else {
-        document.getElementById('username-prompt').style.display = 'block';
-    }
-
-    updatePlots();
-    updateBlinkStats();
-    checknewday(); // Check if it's a new day to reset blink count
-});
-
 document.addEventListener('DOMContentLoaded', () => {
+    chrome.cookies.get({ url: 'https://blinke.netlify.app', name: 'blinkerUID' }, (cookie) => {
+        if (cookie) {
+            userId = cookie.value;
+            loadUserData();
+        } else {
+            document.getElementById('username-modal').style.display = 'flex';
+        }
+    });
+
+    document.getElementById('open-website-button').addEventListener('click', () => {
+        chrome.tabs.create({ url: 'https://blinke.netlify.app' });
+    });
+
     const blinkStats = document.getElementById('blink-stats');
+    const tooltip = document.getElementById('username-tooltip');
 
     blinkStats.addEventListener('mouseover', () => {
         if (tooltip.textContent) {
@@ -189,6 +188,42 @@ document.addEventListener('DOMContentLoaded', () => {
         tooltip.style.opacity = '0';
     });
 });
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'userLoggedIn') {
+        userId = request.userId;
+        loadUserData();
+    } else if (request.action === 'userLoggedOut') {
+        userId = '';
+        document.getElementById('username-modal').style.display = 'flex';
+        document.getElementById('username-tooltip').textContent = '';
+        document.getElementById('blink-count').textContent = 0;
+        treeStates = [];
+        updatePlots();
+    }
+});
+
+function loadUserData() {
+    fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/loaduserid/${userId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Username loaded:', data);
+            document.getElementById('username-tooltip').textContent = data.username;
+            document.getElementById('blink-count').textContent = data.blinkscore || 0;
+            treeStates = JSON.parse(data.treeStates || '[]');
+            updatePlots();
+            document.getElementById('username-modal').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error loading username:', error);
+            document.getElementById('username-modal').style.display = 'flex';
+        });
+}
 
 //fix the following console command for testing purposes
 //chrome.storage.local.get([highScore])
@@ -217,14 +252,6 @@ function updatePlots() {
     });
     updateBlinkStats();
 }
-
-// Update the blink stats display
-function updateBlinkStats() {
-    document.getElementById('blink-count').textContent = totalBlinkersToday;
-    document.getElementById('high-score').textContent = highScore;
-}
-
-
 
 // Start the countdown overlay
 function startCountdown(plot, index) {
@@ -312,16 +339,30 @@ function startTimer(plot, index) {
             playBeep(1500, 150); // Highest beep at the moment of planting
             plot.classList.add('active');
             treeStates.push(index);
-            totalBlinkersToday++;
-            if (totalBlinkersToday > highScore) {
-                highScore = totalBlinkersToday;
-            }
-            chrome.storage.local.set({ treeStates, totalBlinkersToday, highScore }, () => {
-                console.log('Tree planted!');
-            });
+            const blinkCountElement = document.getElementById('blink-count');
+            const currentCount = parseInt(blinkCountElement.textContent) || 0;
+            blinkCountElement.textContent = currentCount + 1;
+            console.log('Tree planted!');
             timerElement.textContent = 'Planted!';
             timerElement.style.fontSize = '16px';
             startBlinkerAnimation(plot);
+            //send an api request to the server to update the blink count for the user by doing /blink/:id
+            if (userId) {
+                const url =
+                `https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
+
+              fetch(url, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+              })
+                .then(r => {
+                  if (!r.ok) throw new Error('Network response was not ok');
+                  return r.json();
+                })
+                .then(data => console.log('Blink count updated:', data))
+                .catch(err => console.error('Error updating blink count:', err));
+
+            }
         }
     }, 100);
 }
@@ -346,7 +387,6 @@ function startBlinkerAnimation(plot) {
             stopSirenSound(); // Stop the siren explicitly
             overlay.style.display = 'none';
             isBlinking = false;
-            updateBlinkStats();
             checkAllTreesFilled();
             // The following setTimeout seems to be for tree death, not directly related to plot argument.
             // If 'index' is needed here, it must be passed to startBlinkerAnimation.
@@ -377,10 +417,8 @@ function startBlinkerAnimation(plot) {
                     const treeToRemoveIndex = treeStates.indexOf(plotIndexForDeath);
                     if (treeToRemoveIndex !== -1) {
                         treeStates.splice(treeToRemoveIndex, 1); // Remove the tree
-                        chrome.storage.local.set({ treeStates }, () => {
-                            console.log(`Tree at plot ${plotIndexForDeath} removed after timeout.`);
-                            updatePlots(); // Update display after removal
-                        });
+                        console.log(`Tree at plot ${plotIndexForDeath} removed after timeout.`);
+                        updatePlots(); // Update display after removal
                     } else {
                          // If it was already removed or not found, just clear the plot visually if it wasn't.
                         plot.classList.remove('active');
@@ -456,27 +494,6 @@ function getRandomGnomeMessage() {
     return messages[Math.floor(Math.random() * messages.length)];
 }
 
-// Reset daily blink count at midnight
-function checknewday() {
-    //see if the current date is different from the last saved date, if there is no saved date, or if the last saved date is more than 24 hours ago
-    // then reset the daily blink count
-    const now = new Date();
-    chrome.storage.local.get(['lastResetDate'], ({ lastResetDate }) => {
-        if (!lastResetDate || new Date(lastResetDate).toDateString() !== now.toDateString()) {
-            totalBlinkersToday = 0;
-            chrome.storage.local.set({ totalBlinkersToday, lastResetDate: now.toISOString() }, () => {
-                console.log('Daily blink count reset!');
-                updateBlinkStats();
-            });
-        }
-        else {
-            console.log('Daily blink count already reset for today.');
-        }
-        updateBlinkStats();
-    });
-
-}
-
 // Event listeners for plots
 plots.forEach((plot, index) => {
     plot.addEventListener('click', () => {
@@ -490,23 +507,23 @@ plots.forEach((plot, index) => {
 // Event listener for reset button
 document.getElementById('reset-button').addEventListener('click', () => {
     treeStates = [];
-    chrome.storage.local.set({ treeStates }, () => {
-        console.log('Trees reset!');
-    });
-    updatePlots();
-});
+    if (userId) {
+        const url =
+        `https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/reset/${userId}`;
 
-// Event listener for reducing daily blinker count
-document.getElementById('blink-count').addEventListener('click', () => {
-    if (totalBlinkersToday > 0) {
-        totalBlinkersToday--;
-        if (totalBlinkersToday > highScore) {
-            highScore = totalBlinkersToday;
-        }
-        chrome.storage.local.set({ totalBlinkersToday, highScore }, () => {
-            console.log('Daily blink count reduced!');
-        });
-        updateBlinkStats();
+      fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+        .then(r => {
+          if (!r.ok) throw new Error('Network response was not ok');
+          return r.json();
+        })
+        .then(data => {
+            console.log('Trees reset:', data)
+            updatePlots();
+        })
+        .catch(err => console.error('Error resetting trees:', err));
+
     }
 });
-//chrome.storage.local.remove('bbUsername', () => console.log('Username removed from storage'));
