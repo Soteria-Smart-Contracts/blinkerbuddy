@@ -23,6 +23,6 @@ app.get('/keepalive', (req, res) => {
     res.send('OK');
 });
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`Keepalive server running`);
+app.listen(process.env.PORT || 5000, '0.0.0.0', () => {
+    console.log(`Keepalive server running on port ${process.env.PORT || 5000}`);
 });
