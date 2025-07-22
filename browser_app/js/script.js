@@ -262,6 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
             //if this happens we should prompt the user to enter a username
             document.getElementById('username-modal').style.display = 'flex'; // Show the modal to enter username
             username = ''; // Reset username if loading fails
+            document.getElementById('username-tooltip').textContent = ''; // Clear tooltip
+            // Optionally, you can alert the user about the error
+            // but for now, we will just show the modal
             alert('Error loading username. Please try again later.');
         });
     }
