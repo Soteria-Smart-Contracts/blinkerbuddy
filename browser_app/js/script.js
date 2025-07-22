@@ -259,6 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(error => {
             console.error('Error loading username:', error);
+            //if this happens we should prompt the user to enter a username
+            document.getElementById('username-modal').style.display = 'flex'; // Show the modal to enter username
+            username = ''; // Reset username if loading fails
             alert('Error loading username. Please try again later.');
         });
     }
