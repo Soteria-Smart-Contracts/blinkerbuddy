@@ -386,7 +386,29 @@ function startTimer(plot, index) {
             timerElement.textContent = 'Planted!';
             timerElement.style.fontSize = '16px';
             startBlinkerAnimation(plot);
-            //send an api request to the server to update the blink count for the user
+            //send an api request to the server to update the blink count for the user by doing /blink/:id
+            if (userId) {
+                fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/blink/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ blinkCount: currentCount + 1 })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Blink count updated:', data);
+                })
+                .catch(error => {
+                    console.error('Error updating blink count:', error);
+                });
+            }
+            isBlinking = false; // Reset blinking state
         }
     }, 100);
 }
