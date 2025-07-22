@@ -1,6 +1,5 @@
 const plots = document.querySelectorAll('.plot');
 let treeStates = [];
-let totalBlinkersToday = 0;
 let highScore = 0;
 let isBlinking = false;
 let plantedTreesCount = 0;
@@ -184,7 +183,6 @@ function stopSirenSound() {
 
 // Load saved states from storage
 treeStates = JSON.parse(localStorage.getItem('treeStates')) || [];
-totalBlinkersToday = parseInt(localStorage.getItem('totalBlinkersToday')) || 0;
 highScore = parseInt(localStorage.getItem('highScore')) || 0;
 updatePlots();
 updateBlinkStats();
