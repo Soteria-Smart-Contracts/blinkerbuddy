@@ -77,7 +77,74 @@ function exportfunc() {
     });
 }
 // Add an import function to handle importing data from a QR code via camera
+function importfunc() {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    const overlay = document.createElement('div');
+    const text = document.createElement('div');
 
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.display = 'flex';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    overlay.style.zIndex = '1000';
+
+    text.style.color = 'white';
+    text.style.fontSize = '24px';
+    text.style.marginBottom = '20px';
+    text.textContent = 'Scan the QR code to import data';
+
+    overlay.appendChild(text);
+    overlay.appendChild(video);
+    document.body.appendChild(overlay);
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then((stream) => {
+            video.srcObject = stream;
+            video.play();
+
+            const interval = setInterval(() => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code) {
+                    clearInterval(interval);
+                    stream.getTracks().forEach((track) => track.stop());
+                    document.body.removeChild(overlay);
+
+                    fetch(code.data)
+                        .then((response) => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then((data) => {
+                            console.log('Imported data:', data);
+                            alert('Data imported successfully!');
+                        })
+                        .catch((error) => {
+                            console.error('Error importing data:', error);
+                            alert('Error importing data. Please try again.');
+                        });
+                }
+            }, 500);
+        })
+        .catch((error) => {
+            console.error('Error accessing camera:', error);
+            alert('Error accessing camera. Please ensure camera permissions are enabled.');
+        });
+}
 
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
