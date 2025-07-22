@@ -282,19 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('blink-count').textContent = data.blinkscore || 0; // Set blink score
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
                     //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
-                    //the treestate is a string which needs to be parsed into an array
-                    if (data.treeStates && Array.isArray(data.treeStates)) {
-                        treeStates = data.treeStates; // Load tree states
-                    } else if (data.treeStates && typeof data.treeStates === 'string') {
-                        try {
-                            treeStates = JSON.parse(data.treeStates); // Parse string to array
-                        } catch (e) {
-                            console.error('Error parsing treeStates:', e);
-                            treeStates = []; // Reset to empty array on parse error
-                        }
-                    } else {
-                        treeStates = []; // Default to empty array if no valid data
-                    }
+                    //the treestate is a string which needs to be parsed into an array, one liner
+                    
                     treeStates = data.treeStates || []; // Load tree states
                     updatePlots(); // Update the plots with loaded tree states
 
