@@ -380,9 +380,6 @@ function startTimer(plot, index) {
             plot.classList.add('active');
             treeStates.push(index);
             totalBlinkersToday++;
-            if (totalBlinkersToday > highScore) {
-                highScore = totalBlinkersToday;
-            }
             localStorage.setItem('treeStates', JSON.stringify(treeStates));
             console.log('Tree planted!');
             timerElement.textContent = 'Planted!';
