@@ -76,7 +76,9 @@ function exportfunc() {
         alert('Error exporting data. Please try again later.');
     });
 }
-// Add an import function to handle importing data from a QR code via c
+// Add an import function to handle importing data from a QR code via camera
+
+
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
     const context = getAudioContext();
