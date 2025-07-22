@@ -294,13 +294,6 @@ function updatePlots() {
     updateBlinkStats();
 }
 
-// Update the blink stats display
-function updateBlinkStats() {
-    document.getElementById('blink-count').textContent = totalBlinkersToday;
-    document.getElementById('high-score').textContent = highScore;
-}
-
-
 
 // Start the countdown overlay
 function startCountdown(plot, index) {
