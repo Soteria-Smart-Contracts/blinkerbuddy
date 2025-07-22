@@ -234,7 +234,6 @@ function stopSirenSound() {
 
 // Load saved states from storage
 treeStates = [];
-updatePlots();
 
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -284,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
                     //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
                     treeStates = data.treeStates || []; // Load tree states
+                    
 
                 })
                 .catch(error => {
