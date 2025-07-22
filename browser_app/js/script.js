@@ -183,7 +183,6 @@ function stopSirenSound() {
 
 // Load saved states from storage
 treeStates = JSON.parse(localStorage.getItem('treeStates')) || [];
-highScore = parseInt(localStorage.getItem('highScore')) || 0;
 updatePlots();
 
 document.addEventListener('DOMContentLoaded', () => {
