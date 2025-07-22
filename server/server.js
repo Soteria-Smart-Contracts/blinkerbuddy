@@ -71,6 +71,16 @@ app.get('/', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Catch-all for trailing slashes to prevent redirects
+app.use((req, res, next) => {
+  if (req.path !== '/' && req.path.endsWith('/')) {
+    // Remove trailing slash without redirect for CORS compatibility
+    req.url = req.url.slice(0, -1);
+    req.path = req.path.slice(0, -1);
+  }
+  next();
+});
+
 // Register endpoint: /register/:username
 app.get('/register/:username', async (req, res) => {
   const username = req.params.username;
@@ -502,4 +512,6 @@ app.get('/reset', async (req, res) => {
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
+  console.log(`Server accessible at: http://0.0.0.0:${PORT}`);
+  console.log(`CORS enabled for all origins`);
 });
