@@ -408,7 +408,6 @@ function startTimer(plot, index) {
                     console.error('Error updating blink count:', error);
                 });
             }
-            isBlinking = false; // Reset blinking state
         }
     }, 100);
 }
