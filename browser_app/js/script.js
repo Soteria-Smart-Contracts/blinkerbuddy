@@ -337,6 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+//now if I go to the website with a id as query parameter, it will import the data from the server
+
 //fix the following console command for testing purposes
 //chrome.storage.local.get([highScore])
 
