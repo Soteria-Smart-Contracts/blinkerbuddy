@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('username-modal').style.display = 'none'; // Hide the modal if username is loaded
         })
         .catch(error => {
-            console.error('Error loading username:', error);
+            console.log('Error loading username:', error);
             //if this happens we should prompt the user to enter a username
             document.getElementById('username-modal').style.display = 'flex'; // Show the modal to enter username
             username = ''; // Reset username if loading fails
