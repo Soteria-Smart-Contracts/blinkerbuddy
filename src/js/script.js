@@ -157,17 +157,11 @@ function stopSirenSound() {
 }
 
 // Load saved states from storage
-chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore', 'bbUsername'], ({ treeStates: ts, totalBlinkersToday: tb, highScore: hs, bbUsername: username }) => {
+chrome.storage.local.get(['treeStates', 'totalBlinkersToday', 'highScore'], ({ treeStates: ts, totalBlinkersToday: tb, highScore: hs}) => {
     treeStates = ts || [];
     totalBlinkersToday = tb || 0;
     highScore = hs || 0;
-    const tooltip = document.getElementById('username-tooltip');
 
-    if (username) {
-        tooltip.textContent = username;
-    } else {
-        document.getElementById('username-prompt').style.display = 'block';
-    }
 
     updatePlots();
     updateBlinkStats();
