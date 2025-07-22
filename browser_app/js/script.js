@@ -284,6 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
                     //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
                     treeStates = data.treeState || []; // Load tree states
+                    
                 })
                 .catch(error => {
                     console.error('Error loading username:', error);
