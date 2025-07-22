@@ -185,7 +185,6 @@ function stopSirenSound() {
 treeStates = JSON.parse(localStorage.getItem('treeStates')) || [];
 highScore = parseInt(localStorage.getItem('highScore')) || 0;
 updatePlots();
-checknewday(); // Check if it's a new day to reset blink count
 
 document.addEventListener('DOMContentLoaded', () => {
    //the sotrage is checked for an id at the start of the script, so we can use that instead, and then call /loadusername:id to fetch the username of the user
