@@ -379,7 +379,9 @@ function startTimer(plot, index) {
             playBeep(1500, 150); // Highest beep at the moment of planting
             plot.classList.add('active');
             treeStates.push(index);
-            totalBlinkersToday++;
+            const blinkCountElement = document.getElementById('blink-count');
+            const currentCount = parseInt(blinkCountElement.textContent) || 0;
+            blinkCountElement.textContent = currentCount + 1;
             localStorage.setItem('treeStates', JSON.stringify(treeStates));
             console.log('Tree planted!');
             timerElement.textContent = 'Planted!';
