@@ -160,17 +160,27 @@ let userId = '';
 
 // Load saved states from storage
 document.addEventListener('DOMContentLoaded', () => {
-    chrome.cookies.get({ url: 'https://blinke.netlify.app', name: 'blinkerUID' }, (cookie) => {
-        if (cookie) {
-            userId = cookie.value;
-            loadUserData();
-        } else {
-            document.getElementById('username-modal').style.display = 'flex';
-        }
-    });
+    try {
+        chrome.cookies.get({ url: 'https://blinke.netlify.app', name: 'blinkerUID' }, (cookie) => {
+            if (cookie) {
+                userId = cookie.value;
+                loadUserData();
+            } else {
+                document.getElementById('username-modal').style.display = 'flex';
+            }
+        });
+    } catch (e) {
+        console.error(e);
+        document.getElementById('username-modal').style.display = 'flex';
+    }
 
     document.getElementById('open-website-button').addEventListener('click', () => {
-        chrome.tabs.create({ url: 'https://blinke.netlify.app' });
+        try {
+            chrome.tabs.create({ url: 'https://blinke.netlify.app' });
+        } catch (e) {
+            console.error(e);
+            window.open('https://blinke.netlify.app', '_blank');
+        }
     });
 
     const blinkStats = document.getElementById('blink-stats');
@@ -189,19 +199,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'userLoggedIn') {
-        userId = request.userId;
-        loadUserData();
-    } else if (request.action === 'userLoggedOut') {
-        userId = '';
-        document.getElementById('username-modal').style.display = 'flex';
-        document.getElementById('username-tooltip').textContent = '';
-        document.getElementById('blink-count').textContent = 0;
-        treeStates = [];
-        updatePlots();
-    }
-});
+try {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === 'userLoggedIn') {
+            userId = request.userId;
+            loadUserData();
+        } else if (request.action === 'userLoggedOut') {
+            userId = '';
+            document.getElementById('username-modal').style.display = 'flex';
+            document.getElementById('username-tooltip').textContent = '';
+            document.getElementById('blink-count').textContent = 0;
+            treeStates = [];
+            updatePlots();
+        }
+    });
+} catch (e) {
+    console.error(e);
+}
 
 function loadUserData() {
     fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/loaduserid/${userId}`)
