@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
                     //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
                     treeStates = data.treeStates || []; // Load tree states
-                    
+                    updatePlots(); // Update the plots with loaded tree states
 
                 })
                 .catch(error => {
