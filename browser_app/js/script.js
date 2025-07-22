@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (importId) {
         // If there's an 'id' parameter, import the data
-        fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/loaduserid/${importId}`)
+        fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/import/${importId}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
