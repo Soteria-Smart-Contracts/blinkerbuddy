@@ -233,7 +233,7 @@ function stopSirenSound() {
 }
 
 // Load saved states from storage
-treeStates = JSON.parse(localStorage.getItem('treeStates')) || [];
+treeStates = [];
 updatePlots();
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
                     //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
                     treeStates = data.treeState || []; // Load tree states
-                    
+
                 })
                 .catch(error => {
                     console.error('Error loading username:', error);
