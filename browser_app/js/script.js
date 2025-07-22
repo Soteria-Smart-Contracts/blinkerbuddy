@@ -384,7 +384,6 @@ function startTimer(plot, index) {
                 highScore = totalBlinkersToday;
             }
             localStorage.setItem('treeStates', JSON.stringify(treeStates));
-            localStorage.setItem('highScore', highScore);
             console.log('Tree planted!');
             timerElement.textContent = 'Planted!';
             timerElement.style.fontSize = '16px';
