@@ -7,6 +7,8 @@ channel = "stable-24_05"
 [deployment]
 run = "node server/server.js"
 deploymentTarget = "cloudrun"
+ignorePorts = false
+
 
 [[ports]]
 localPort = 3000
