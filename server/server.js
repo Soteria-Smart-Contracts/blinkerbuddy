@@ -277,6 +277,8 @@ app.get('/import/:token', async (req, res) => {
 
 // All users endpoint: /all
 app.get('/all', async (req, res) => {
+  const callback = req.query.callback; // JSONP callback parameter
+
   try {
     const allUsers = [];
     const usersListResult = await db.list('user:');
@@ -309,13 +311,26 @@ app.get('/all', async (req, res) => {
 
     console.log(`[${new Date().toISOString()}] Final users array:`, allUsers);
 
-    res.status(200).json({
+    const responseData = {
       users: allUsers,
       total_users: allUsers.length
-    });
+    };
+
+    // If callback parameter exists, return JSONP response
+    if (callback) {
+      res.setHeader('Content-Type', 'application/javascript');
+      return res.status(200).send(`${callback}(${JSON.stringify(responseData)});`);
+    }
+
+    // Otherwise return regular JSON
+    res.status(200).json(responseData);
   } catch (error) {
     console.error('Error getting all users:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    const errorResponse = { error: 'Internal server error' };
+    if (callback) {
+      return res.status(500).send(`${callback}(${JSON.stringify(errorResponse)});`);
+    }
+    res.status(500).json(errorResponse);
   }
 });
 
