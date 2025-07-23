@@ -9,8 +9,13 @@ const db = new Database();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware - this is the key part that fixes CORS!
-app.use(require('cors')()); // Simple cors setup like in your working example
+// Middleware - CORS configuration
+app.use(require('cors')({
+  origin: '*',
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
