@@ -1,10 +1,10 @@
 const express = require('express');
 const crypto = require('crypto');
-const Database = require('@replit/database');
+const { Datastore } = require('@google-cloud/datastore');
 const QRCode = require('qrcode');
 
-// Initialize Replit Database
-const db = new Database();
+// Initialize Google Cloud Datastore
+const datastore = new Datastore();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,26 +21,28 @@ function generateHexId() {
 
 // Helper function to remove expired token
 async function removeExpiredToken(exportToken, userId) {
+  const transaction = datastore.transaction();
   try {
-    // Remove from active exports
-    await db.delete(`activeExport:${exportToken}`);
+    await transaction.run();
+    const activeExportKey = datastore.key(['activeExport', exportToken]);
+    const userKey = datastore.key(['user', userId]);
 
-    // Clear token from user record
-    const userResult = await db.get(`user:${userId}`);
-    let user = null;
-    if (userResult && userResult.ok && userResult.value) {
-      user = userResult.value;
-    } else if (userResult && userResult.id) {
-      user = userResult;
-    }
+    const [user] = await transaction.get(userKey);
 
     if (user && user.exportToken === exportToken) {
       user.exportToken = null;
-      await db.set(`user:${userId}`, user);
+      transaction.save({
+        key: userKey,
+        data: user,
+      });
     }
 
+    transaction.delete(activeExportKey);
+
+    await transaction.commit();
     console.log(`[${new Date().toISOString()}] Export token expired and removed: ${exportToken.substring(0, 8)}...`);
   } catch (error) {
+    await transaction.rollback();
     console.error('Error removing expired token:', error);
   }
 }
@@ -58,50 +60,41 @@ app.get('/register/:username', async (req, res) => {
     return res.status(400).json({ error: 'Username is required' });
   }
 
+  const transaction = datastore.transaction();
   try {
-    // Check if username already exists
-    const usersListResult = await db.list('user:');
-    const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
+    await transaction.run();
+    const query = datastore.createQuery('user').filter('username', '=', username);
+    const [users] = await transaction.runQuery(query);
 
-    console.log(`[${new Date().toISOString()}] Checking for duplicate username: ${username}`);
-    console.log(`[${new Date().toISOString()}] Found ${usersList.length} existing users`);
-
-    for (const key of usersList) {
-      const userResult = await db.get(key);
-      // Handle both direct user object and wrapped response
-      let userData = null;
-      if (userResult && userResult.ok && userResult.value) {
-        userData = userResult.value;
-      } else if (userResult && userResult.id) {
-        userData = userResult;
-      }
-
-      console.log(`[${new Date().toISOString()}] Checking user ${key}: ${userData ? userData.username : 'no data'}`);
-
-      if (userData && userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
-        console.log(`[${new Date().toISOString()}] Username '${username}' already exists!`);
-        return res.status(409).json({ error: 'Username already exists' });
-      }
+    if (users.length > 0) {
+      await transaction.rollback();
+      return res.status(409).json({ error: 'Username already exists' });
     }
 
-    // Generate unique ID and register user
     const userId = generateHexId();
+    const userKey = datastore.key(['user', userId]);
     const newUser = {
       id: userId,
       username: username,
       blinkscore: 0,
-      exportToken: null // Space reserved for one-time export token
+      exportToken: null,
     };
 
-    await db.set(`user:${userId}`, newUser);
+    transaction.save({
+      key: userKey,
+      data: newUser,
+    });
+
+    await transaction.commit();
     console.log(`[${new Date().toISOString()}] User registered:`, { id: userId, username: username });
 
     res.status(200).json({
       id: userId,
       username: username,
-      blinkscore: 0
+      blinkscore: 0,
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Error registering user:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -115,100 +108,71 @@ app.get('/export/:username', async (req, res) => {
     return res.status(400).json({ error: 'Username is required' });
   }
 
+  const transaction = datastore.transaction();
   try {
-    // Find user by username
-    let targetUser = null;
-    let targetUserId = null;
+    await transaction.run();
+    const query = datastore.createQuery('user').filter('username', '=', username);
+    const [users] = await transaction.runQuery(query);
 
-    // Check if username already exists
-    const usersListResult = await db.list('user:');
-    const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
-
-    for (const key of usersList) {
-      const userResult = await db.get(key);
-      // Handle both direct user object and wrapped response
-      let userData = null;
-      if (userResult && userResult.ok && userResult.value) {
-        userData = userResult.value;
-      } else if (userResult && userResult.id) {
-        userData = userResult;
-      }
-
-      if (userData && userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
-        targetUser = userData;
-        targetUserId = userData.id;
-        break;
-      }
-    }
-
-    if (!targetUser) {
+    if (users.length === 0) {
+      await transaction.rollback();
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Generate one-time export token
-    const exportToken = generateHexId();
-    const expirationTime = Date.now() + (3 * 60 * 1000); // 3 minutes from now
+    const user = users[0];
+    const userId = user.id;
 
-    // Store token in active exports (without the secret token)
+    const exportToken = generateHexId();
+    const expirationTime = Date.now() + 3 * 60 * 1000; // 3 minutes
+
+    const activeExportKey = datastore.key(['activeExport', exportToken]);
     const activeExportData = {
-      userId: targetUserId,
+      userId: userId,
       username: username,
-      createdAt: Date.now(),
-      expiresAt: expirationTime
+      createdAt: new Date(),
+      expiresAt: new Date(expirationTime),
     };
 
-    await db.set(`activeExport:${exportToken}`, activeExportData);
+    transaction.save({
+      key: activeExportKey,
+      data: activeExportData,
+    });
+
+    await transaction.commit();
     console.log(`[${new Date().toISOString()}] Stored active export:`, activeExportData);
 
-    // Set individual timeout to clear token after exactly 3 minutes
     setTimeout(() => {
-      removeExpiredToken(exportToken, targetUserId);
+      removeExpiredToken(exportToken, userId);
     }, 3 * 60 * 1000);
 
-    // Generate QR code with the import link
     const importUrl = `https://blinke.netlify.app/?id=${exportToken}`;
+    const qrCodeDataURL = await QRCode.toDataURL(importUrl, {
+      errorCorrectionLevel: 'M',
+      type: 'image/png',
+      quality: 0.92,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF',
+      },
+      width: 256,
+    });
 
-    try {
-      const qrCodeDataURL = await QRCode.toDataURL(importUrl, {
-        errorCorrectionLevel: 'M',
-        type: 'image/png',
-        quality: 0.92,
-        margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        },
-        width: 256
-      });
-
-      res.status(200).json({
-        username: username,
-        id: targetUserId,
-        token: exportToken,
-        expires_in: 180, // 3 minutes in seconds
-        import_url: importUrl,
-        qr_code: qrCodeDataURL
-      });
-    } catch (qrError) {
-      console.error('Error generating QR code:', qrError);
-      // Fallback without QR code
-      res.status(200).json({
-        username: username,
-        id: targetUserId,
-        token: exportToken,
-        expires_in: 180, // 3 minutes in seconds
-        import_url: importUrl,
-        qr_code: null,
-        error: 'Failed to generate QR code'
-      });
-    }
+    res.status(200).json({
+      username: username,
+      id: userId,
+      token: exportToken,
+      expires_in: 180,
+      import_url: importUrl,
+      qr_code: qrCodeDataURL,
+    });
   } catch (error) {
+    await transaction.rollback();
     console.error('Error exporting user:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-//make an import that validates the token and returns the user data and id
 // Import endpoint: /import/:token
 app.get('/import/:token', async (req, res) => {
   const token = req.params.token;
@@ -217,54 +181,44 @@ app.get('/import/:token', async (req, res) => {
     return res.status(400).json({ error: 'Token is required' });
   }
 
+  const transaction = datastore.transaction();
   try {
-    // Load the active export data using the token
-    const exportResult = await db.get(`activeExport:${token}`);
-    let exportData = null;
+    await transaction.run();
+    const activeExportKey = datastore.key(['activeExport', token]);
+    const [activeExport] = await transaction.get(activeExportKey);
 
-    if (exportResult && exportResult.ok && exportResult.value) {
-      exportData = exportResult.value;
-    } else if (exportResult && exportResult.userId) {
-      exportData = exportResult;
-    }
-
-    if (!exportData) {
+    if (!activeExport) {
+      await transaction.rollback();
       return res.status(404).json({ error: 'Invalid or expired token' });
     }
 
-    // Check if token has expired
-    const now = Date.now();
-    if (exportData.expiresAt && now > exportData.expiresAt) {
-      // Token has expired, remove it
-      await db.delete(`activeExport:${token}`);
+    if (activeExport.expiresAt < new Date()) {
+      transaction.delete(activeExportKey);
+      await transaction.commit();
       return res.status(410).json({ error: 'Token has expired' });
     }
 
-    // Find user data by userId stored in exportData
-    const userResult = await db.get(`user:${exportData.userId}`);
-    let userData = null;
-    if (userResult && userResult.ok && userResult.value) {
-      userData = userResult.value;
-    } else if (userResult && userResult.id) {
-      userData = userResult;
-    }
+    const userKey = datastore.key(['user', activeExport.userId]);
+    const [user] = await transaction.get(userKey);
 
-    if (!userData) {
+    if (!user) {
+      await transaction.rollback();
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Token is valid, return user data
+    await transaction.commit();
     res.status(200).json({
       valid: true,
       user: {
-        id: userData.id,
-        username: userData.username,
-        blinkscore: userData.blinkscore || 0
+        id: user.id,
+        username: user.username,
+        blinkscore: user.blinkscore || 0,
       },
-      expires_at: new Date(exportData.expiresAt).toISOString(),
-      time_remaining: Math.max(0, Math.ceil((exportData.expiresAt - now) / 1000)) // seconds remaining
+      expires_at: activeExport.expiresAt.toISOString(),
+      time_remaining: Math.max(0, Math.ceil((activeExport.expiresAt - Date.now()) / 1000)),
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Error importing user data:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -273,40 +227,15 @@ app.get('/import/:token', async (req, res) => {
 // All users endpoint: /all
 app.get('/all', async (req, res) => {
   try {
-    const allUsers = [];
-    const usersListResult = await db.list('user:');
-    const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
-
-    console.log(`[${new Date().toISOString()}] Found ${usersList.length} user keys in /all`);
-
-    for (const key of usersList) {
-      const userResult = await db.get(key);
-      console.log(`[${new Date().toISOString()}] Retrieved data for key ${key}:`, userResult);
-
-      // Handle both direct user object and wrapped response
-      let user = null;
-      if (userResult && userResult.ok && userResult.value) {
-        user = userResult.value;
-      } else if (userResult && userResult.id) {
-        user = userResult;
-      }
-
-      if (user && user.id && user.username) {
-        allUsers.push({
-          id: user.id,
-          username: user.username,
-          blinkscore: user.blinkscore || 0
-        });
-      } else {
-        console.log(`[${new Date().toISOString()}] Invalid user data for key ${key}:`, user);
-      }
-    }
-
-    console.log(`[${new Date().toISOString()}] Final users array:`, allUsers);
-
+    const query = datastore.createQuery('user');
+    const [users] = await datastore.runQuery(query);
     res.status(200).json({
-      users: allUsers,
-      total_users: allUsers.length
+      users: users.map(user => ({
+        id: user.id,
+        username: user.username,
+        blinkscore: user.blinkscore || 0,
+      })),
+      total_users: users.length,
     });
   } catch (error) {
     console.error('Error getting all users:', error);
@@ -317,49 +246,18 @@ app.get('/all', async (req, res) => {
 // Active exports endpoint: /activeexports
 app.get('/activeexports', async (req, res) => {
   try {
-    const now = Date.now();
-    const activeExportsList = [];
-    const exportsListResult = await db.list('activeExport:');
-    const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
-
-    for (const key of exportsList) {
-      const exportResult = await db.get(key);
-      console.log(`[${new Date().toISOString()}] Retrieved export data for key ${key}:`, exportResult);
-
-      // Handle both direct export object and wrapped response
-      let exportData = null;
-      if (exportResult && exportResult.ok && exportResult.value) {
-        exportData = exportResult.value;
-      } else if (exportResult && exportResult.userId) {
-        exportData = exportResult;
-      }
-
-      if (exportData && exportData.createdAt && exportData.expiresAt) {
-        // Validate timestamps before converting
-        const createdAt = exportData.createdAt;
-        const expiresAt = exportData.expiresAt;
-
-        if (typeof createdAt === 'number' && typeof expiresAt === 'number' && 
-            !isNaN(createdAt) && !isNaN(expiresAt)) {
-          activeExportsList.push({
-            userId: exportData.userId,
-            username: exportData.username,
-            createdAt: new Date(createdAt).toISOString(),
-            expiresAt: new Date(expiresAt).toISOString(),
-            timeRemaining: Math.max(0, Math.ceil((expiresAt - now) / 1000)) // seconds remaining
-          });
-        } else {
-          console.log(`[${new Date().toISOString()}] Skipping export with invalid timestamps:`, exportData);
-        }
-      } else {
-        console.log(`[${new Date().toISOString()}] No valid export data found for key ${key}:`, exportData);
-      }
-    }
-
+    const query = datastore.createQuery('activeExport').filter('expiresAt', '>', new Date());
+    const [activeExports] = await datastore.runQuery(query);
     res.status(200).json({
-      active_exports: activeExportsList,
-      total_active: activeExportsList.length,
-      timestamp: new Date().toISOString()
+      active_exports: activeExports.map(exp => ({
+        userId: exp.userId,
+        username: exp.username,
+        createdAt: exp.createdAt.toISOString(),
+        expiresAt: exp.expiresAt.toISOString(),
+        timeRemaining: Math.max(0, Math.ceil((exp.expiresAt - Date.now()) / 1000)),
+      })),
+      total_active: activeExports.length,
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Error getting active exports:', error);
@@ -368,49 +266,49 @@ app.get('/activeexports', async (req, res) => {
 });
 
 //add a new endpoint called /blink/:id, where if called increments the blinkscore of the user with the given id by 1
-app.get('/blink/:id', async (req, res) =>{
-    const userId = req.params.id;
-    const treeStates = req.query.treeStates; // Getting the treeState array from query parameters
+app.get('/blink/:id', async (req, res) => {
+  const userId = req.params.id;
+  const treeStates = req.query.treeStates;
 
-  console.log(treeStates)
+  if (!userId || userId.trim() === '') {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
 
-    if (!userId || userId.trim() === '') {
-      return res.status(400).json({ error: 'User ID is required' });
+  const transaction = datastore.transaction();
+  try {
+    await transaction.run();
+    const userKey = datastore.key(['user', userId]);
+    const [user] = await transaction.get(userKey);
+
+    if (!user) {
+      await transaction.rollback();
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    try {
-      const userResult = await db.get(`user:${userId}`);
-      let user = null;
-      if (userResult && userResult.ok && userResult.value) {
-        user = userResult.value;
-      } else if (userResult && userResult.id) {
-        user = userResult;
-      }
+    user.blinkscore = (user.blinkscore || 0) + 1;
+    user.treeStates = treeStates || [];
 
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
+    transaction.save({
+      key: userKey,
+      data: user,
+    });
 
-      user.blinkscore = (user.blinkscore || 0) + 1;
-      user.treeStates = treeStates || []; // Adding treeState to the user data
+    await transaction.commit();
+    console.log(`[${new Date().toISOString()}] Blinkscore incremented for user ${userId}`);
+    console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking!`);
 
-      await db.set(`user:${userId}`, user);
-
-      console.log(`[${new Date().toISOString()}] Blinkscore incremented for user ${userId}`);
-
-      console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking!`);
-
-      res.status(200).json({
-        id: user.id,
-        username: user.username,
-        blinkscore: user.blinkscore,
-        treeStates: user.treeStates
-      });
-    } catch (error) {
-      console.error('Error incrementing blinkscore:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
+    res.status(200).json({
+      id: user.id,
+      username: user.username,
+      blinkscore: user.blinkscore,
+      treeStates: user.treeStates,
+    });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error incrementing blinkscore:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Load user ID endpoint: /loaduserid/:id
 app.get('/loaduserid/:id', async (req, res) => {
@@ -420,27 +318,19 @@ app.get('/loaduserid/:id', async (req, res) => {
   }
 
   try {
-    // Find user by user ID
-    const userResult = await db.get(`user:${userId}`);
-    // Handle both direct user object and wrapped response
-    let userData = null;
-    if (userResult && userResult.ok && userResult.value) {
-      userData = userResult.value;
-    } else if (userResult && userResult.id) {
-      userData = userResult;
-    }
+    const userKey = datastore.key(['user', userId]);
+    const [user] = await datastore.get(userKey);
 
-    if (!userData) {
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    console.log(`[${new Date().toISOString()}] User ${userData.username} logging in...`)
-    // Return user data, including treeState
+    console.log(`[${new Date().toISOString()}] User ${user.username} logging in...`);
     res.status(200).json({
-      id: userData.id,
-      username: userData.username,
-      blinkscore: userData.blinkscore || 0,
-      treeStates: userData.treeStates || []
+      id: user.id,
+      username: user.username,
+      blinkscore: user.blinkscore || 0,
+      treeStates: user.treeStates || [],
     });
   } catch (error) {
     console.error('Error loading user:', error);
@@ -457,35 +347,24 @@ app.get('/importcheck/:token', async (req, res) => {
   }
 
   try {
-    // Check if token exists in active exports
-    const exportResult = await db.get(`activeExport:${token}`);
-    let exportData = null;
+    const activeExportKey = datastore.key(['activeExport', token]);
+    const [activeExport] = await datastore.get(activeExportKey);
 
-    if (exportResult && exportResult.ok && exportResult.value) {
-      exportData = exportResult.value;
-    } else if (exportResult && exportResult.userId) {
-      exportData = exportResult;
-    }
-
-    if (!exportData) {
+    if (!activeExport) {
       return res.status(404).json({ error: 'Invalid or expired token' });
     }
 
-    // Check if token has expired
-    const now = Date.now();
-    if (exportData.expiresAt && now > exportData.expiresAt) {
-      // Token has expired, remove it
-      await db.delete(`activeExport:${token}`);
+    if (activeExport.expiresAt < new Date()) {
+      await datastore.delete(activeExportKey);
       return res.status(410).json({ error: 'Token has expired' });
     }
 
-    // Token is valid, return user information
     res.status(200).json({
       valid: true,
-      username: exportData.username,
-      id: exportData.userId,
-      expires_at: new Date(exportData.expiresAt).toISOString(),
-      time_remaining: Math.max(0, Math.ceil((exportData.expiresAt - now) / 1000)) // seconds remaining
+      username: activeExport.username,
+      id: activeExport.userId,
+      expires_at: activeExport.expiresAt.toISOString(),
+      time_remaining: Math.max(0, Math.ceil((activeExport.expiresAt - Date.now()) / 1000)),
     });
   } catch (error) {
     console.error('Error checking import token:', error);
@@ -495,47 +374,32 @@ app.get('/importcheck/:token', async (req, res) => {
 
 // Clear exports endpoint: /clearexports
 app.get('/clearexports', async (req, res) => {
+  const transaction = datastore.transaction();
   try {
-    // Clear all active exports
-    const exportsListResult = await db.list('activeExport:');
-    const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
+    await transaction.run();
 
-    let deletedCount = 0;
-    for (const key of exportsList) {
-      await db.delete(key);
-      deletedCount++;
-      console.log(`[${new Date().toISOString()}] Deleted export: ${key}`);
-    }
+    const activeExportQuery = datastore.createQuery('activeExport');
+    const [activeExports] = await transaction.runQuery(activeExportQuery);
+    const activeExportKeys = activeExports.map(exp => exp[datastore.KEY]);
+    transaction.delete(activeExportKeys);
 
-    // Clear export tokens from all users
-    const usersListResult = await db.list('user:');
-    const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
+    const userQuery = datastore.createQuery('user').filter('exportToken', '!=', null);
+    const [usersToUpdate] = await transaction.runQuery(userQuery);
+    usersToUpdate.forEach(user => {
+      user.exportToken = null;
+    });
+    transaction.save(usersToUpdate.map(user => ({ key: user[datastore.KEY], data: user })));
 
-    let usersUpdated = 0;
-    for (const key of usersList) {
-      const userResult = await db.get(key);
-      let user = null;
-      if (userResult && userResult.ok && userResult.value) {
-        user = userResult.value;
-      } else if (userResult && userResult.id) {
-        user = userResult;
-      }
-
-      if (user && user.exportToken) {
-        user.exportToken = null;
-        await db.set(key, user);
-        usersUpdated++;
-        console.log(`[${new Date().toISOString()}] Cleared export token from user: ${user.username}`);
-      }
-    }
+    await transaction.commit();
 
     res.status(200).json({
       message: 'All active exports have been cleared',
-      deleted_exports: deletedCount,
-      users_updated: usersUpdated,
-      timestamp: new Date().toISOString()
+      deleted_exports: activeExportKeys.length,
+      users_updated: usersToUpdate.length,
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Error clearing exports:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -544,30 +408,19 @@ app.get('/clearexports', async (req, res) => {
 // Reset endpoint: /reset (for development purposes)
 app.get('/reset', async (req, res) => {
   try {
-    // Clear all users
-    const usersListResult = await db.list('user:');
-    const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
-    for (const key of usersList) {
-      await db.delete(key);
-    }
+    const userQuery = datastore.createQuery('user');
+    const [users] = await datastore.runQuery(userQuery);
+    const userKeys = users.map(user => user[datastore.KEY]);
+    await datastore.delete(userKeys);
 
-    // Clear all export tokens
-    const tokensListResult = await db.list('exportToken:');
-    const tokensList = (tokensListResult && tokensListResult.ok && tokensListResult.value) ? tokensListResult.value : [];
-    for (const key of tokensList) {
-      await db.delete(key);
-    }
-
-    // Clear all active exports
-    const exportsListResult = await db.list('activeExport:');
-    const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
-    for (const key of exportsList) {
-      await db.delete(key);
-    }
+    const activeExportQuery = datastore.createQuery('activeExport');
+    const [activeExports] = await datastore.runQuery(activeExportQuery);
+    const activeExportKeys = activeExports.map(exp => exp[datastore.KEY]);
+    await datastore.delete(activeExportKeys);
 
     res.status(200).json({
       message: 'All users and tokens have been reset',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Error resetting database:', error);

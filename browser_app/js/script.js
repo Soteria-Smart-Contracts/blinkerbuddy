@@ -32,7 +32,7 @@ function exportfunc() {
         alert('Please enter a username first!');
         return;
     }
-    fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/export/${encodeURIComponent(username)}`)
+    fetch(`https://your-google-cloud-server-url/export/${encodeURIComponent(username)}`)
     .then(response => {
         if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (importId) {
         // If there's an 'id' parameter, import the data
-        fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/import/${importId}`)
+        fetch(`https://your-google-cloud-server-url/import/${importId}`)
         .then(response => {
           if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // If no 'id' parameter, proceed with the normal flow
         let username;
         if (userId !== '') {
-            fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/loaduserid/${userId}`)
+            fetch(`https://your-google-cloud-server-url/loaduserid/${userId}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const usernameInput = document.getElementById('username-input');
             const newUsername = usernameInput.value.trim();
             if (newUsername) {
-                fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/register/${encodeURIComponent(newUsername)}`)
+                fetch(`https://your-google-cloud-server-url/register/${encodeURIComponent(newUsername)}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
@@ -477,7 +477,7 @@ function startTimer(plot, index) {
             //send an api request to the server to update the blink count for the user by doing /blink/:id
             if (userId) {
                 const url =
-                `https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
+                `https://your-google-cloud-server-url/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
               
               fetch(url, {
                 method: 'GET',
