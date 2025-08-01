@@ -782,6 +782,22 @@ document.getElementById('reset-button').addEventListener('click', () => {
     localStorage.setItem('treeStates', JSON.stringify(treeStates));
     console.log('Trees reset!');
     updatePlots();
+    
+    // Update server with empty tree states
+    if (userId) {
+        const url = `https://blinkerbuddy-wedergarten.replit.app/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
+        
+        fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('Network response was not ok');
+            return r.json();
+        })
+        .then(data => console.log('Server tree states reset:', data))
+        .catch(err => console.error('Error resetting server tree states:', err));
+    }
 });
 
 // Sync function to check for updates from server
