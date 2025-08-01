@@ -279,13 +279,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .then(data => {
                     console.log('Username loaded:', data);
+                    console.log('Raw tree states from loaduserid:', data.treeStates, 'Type:', typeof data.treeStates);
                     username = data.username; // Store the username
                     document.getElementById('username-tooltip').textContent = username;
                     document.getElementById('blink-count').textContent = data.blinkscore || 0; // Set blink score
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
-                    // Load tree states (already an array from server)
-                    treeStates = data.treeStates || [];
-                    console.log('Tree states loaded:', treeStates);
+                    
+                    // Load tree states with better handling
+                    let loadedTreeStates = data.treeStates || [];
+                    
+                    // If it's a string, try to parse it
+                    if (typeof loadedTreeStates === 'string') {
+                        try {
+                            loadedTreeStates = JSON.parse(loadedTreeStates);
+                        } catch (parseError) {
+                            console.error('Failed to parse tree states on load:', parseError);
+                            loadedTreeStates = [];
+                        }
+                    }
+                    
+                    // Ensure it's an array
+                    if (Array.isArray(loadedTreeStates)) {
+                        treeStates = loadedTreeStates;
+                        console.log('Tree states loaded successfully:', treeStates);
+                    } else {
+                        console.error('Tree states is not an array on load:', loadedTreeStates);
+                        treeStates = [];
+                    }
+                    
                     updatePlots(); // Update the plots with loaded tree states
                     startSyncInterval(); // Start syncing with server
 
@@ -440,26 +461,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Update the plots to reflect the current state of trees
 function updatePlots() {
+    console.log('updatePlots called with treeStates:', treeStates, 'Type:', typeof treeStates, 'IsArray:', Array.isArray(treeStates));
+    
     // Ensure treeStates is always an array
     if (!Array.isArray(treeStates)) {
+        console.warn('treeStates is not an array, converting...', treeStates);
         treeStates = [];
     }
-    console.log(treeStates);
+    
     plantedTreesCount = 0; // Reset plantedTreesCount
+    
     // Clear all plots
     plots.forEach(plot => {
         plot.classList.remove('active');
         plot.innerHTML = '';
     });
-    treeStates.forEach((index) => {
-        const plotElement = plots[index];
-        plotElement.classList.add('active');
-        plotElement.innerHTML = '<div class="timer countdown">Planted!</div>';
-        plotElement.querySelector('.timer').style.fontSize = '16px';
-        plotElement.querySelector('.timer').style.color = 'cyan';
-
+    
+    console.log(`Processing ${treeStates.length} tree states:`, treeStates);
+    
+    treeStates.forEach((index, arrayIndex) => {
+        console.log(`Processing tree ${arrayIndex}: index=${index}, type=${typeof index}`);
+        
+        const plotIndex = parseInt(index);
+        if (isNaN(plotIndex) || plotIndex < 0 || plotIndex >= plots.length) {
+            console.error(`Invalid plot index: ${index} (parsed as ${plotIndex})`);
+            return;
+        }
+        
+        const plotElement = plots[plotIndex];
+        if (plotElement) {
+            plotElement.classList.add('active');
+            plotElement.innerHTML = '<div class="timer countdown">Planted!</div>';
+            plotElement.querySelector('.timer').style.fontSize = '16px';
+            plotElement.querySelector('.timer').style.color = 'cyan';
+            console.log(`Successfully updated plot ${plotIndex}`);
+        } else {
+            console.error(`Plot element not found for index ${plotIndex}`);
+        }
     });
-
+    
+    console.log(`updatePlots completed. ${treeStates.length} trees should be visible.`);
 }
 
 
@@ -765,6 +806,8 @@ function syncWithServer() {
         return response.json();
     })
     .then(data => {
+        console.log('Raw sync response:', data);
+        
         if (data.changed) {
             console.log('Server data changed, updating local state...');
             console.log(`Server state: Blinks=${data.blinkscore}, Trees=${JSON.stringify(data.treeStates)}`);
@@ -774,15 +817,63 @@ function syncWithServer() {
                 document.getElementById('blink-count').textContent = data.blinkscore;
             }
             
-            // Only update tree states if they're different and valid
-            if (Array.isArray(data.treeStates)) {
-                treeStates = data.treeStates;
-                updatePlots();
+            // Handle tree states with better validation
+            if (data.treeStates !== undefined) {
+                let newTreeStates = data.treeStates;
+                
+                // If it's a string, try to parse it
+                if (typeof newTreeStates === 'string') {
+                    try {
+                        newTreeStates = JSON.parse(newTreeStates);
+                    } catch (parseError) {
+                        console.error('Failed to parse tree states string:', parseError);
+                        newTreeStates = [];
+                    }
+                }
+                
+                // Ensure it's an array
+                if (Array.isArray(newTreeStates)) {
+                    console.log('Updating tree states from server:', newTreeStates);
+                    treeStates = newTreeStates;
+                    updatePlots();
+                } else {
+                    console.error('Tree states is not an array:', newTreeStates);
+                    treeStates = [];
+                    updatePlots();
+                }
             }
             
             console.log(`Synced: Blinks: ${data.blinkscore}, Trees: ${treeStates.length}`);
         } else {
-            console.log('No changes from server');
+            console.log('No changes from server, but updating from response data...');
+            
+            // Even when changed=false, we should still update from server data
+            if (data.blinkscore !== undefined) {
+                document.getElementById('blink-count').textContent = data.blinkscore;
+            }
+            
+            if (data.treeStates !== undefined) {
+                let newTreeStates = data.treeStates;
+                
+                // If it's a string, try to parse it
+                if (typeof newTreeStates === 'string') {
+                    try {
+                        newTreeStates = JSON.parse(newTreeStates);
+                    } catch (parseError) {
+                        console.error('Failed to parse tree states string:', parseError);
+                        newTreeStates = [];
+                    }
+                }
+                
+                // Ensure it's an array
+                if (Array.isArray(newTreeStates)) {
+                    console.log('Updating tree states from server (no changes):', newTreeStates);
+                    treeStates = newTreeStates;
+                    updatePlots();
+                }
+            }
+            
+            console.log(`Synced (no changes): Blinks: ${data.blinkscore}, Trees: ${treeStates.length}`);
         }
     })
     .catch(error => {
