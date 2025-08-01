@@ -1,0 +1,86 @@
+
+Error syncing user data: ReferenceError: serv is not defined
+2025-08-01 18:36:19.87
+290f1743
+User
+at /home/runner/workspace/server/server.js:716:19
+2025-08-01 18:36:19.87
+290f1743
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-08-01 18:36:19.87
+290f1743
+User
+Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
+2025-08-01 18:36:19.87
+290f1743
+User
+at ServerResponse.setHeader (node:_http_outgoing:655:11)
+2025-08-01 18:36:19.87
+290f1743
+User
+at ServerResponse.header (/home/runner/workspace/node_modules/express/lib/response.js:684:10)
+2025-08-01 18:36:19.87
+290f1743
+User
+at ServerResponse.json (/home/runner/workspace/node_modules/express/lib/response.js:247:10)
+2025-08-01 18:36:19.87
+290f1743
+User
+at /home/runner/workspace/server/server.js:720:21
+2025-08-01 18:36:19.87
+290f1743
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-08-01 18:36:22.84
+290f1743
+User
+[2025-08-01T22:36:22.848Z] Sync check for user 2ae4fe933b1f65408c8e27bd9f64eb6f:
+2025-08-01 18:36:22.84
+290f1743
+User
+Server: Blinks=7, Trees=[3]
+2025-08-01 18:36:22.84
+290f1743
+User
+Client: Blinks=7, Trees=[3]
+2025-08-01 18:36:22.84
+290f1743
+User
+Changed: Blinks=false, Trees=false
+2025-08-01 18:36:22.85
+290f1743
+User
+Error syncing user data: ReferenceError: serv is not defined
+2025-08-01 18:36:22.85
+290f1743
+User
+at /home/runner/workspace/server/server.js:716:19
+2025-08-01 18:36:22.85
+290f1743
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-08-01 18:36:22.85
+290f1743
+User
+Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
+2025-08-01 18:36:22.85
+290f1743
+User
+at ServerResponse.setHeader (node:_http_outgoing:655:11)
+2025-08-01 18:36:22.85
+290f1743
+User
+at ServerResponse.header (/home/runner/workspace/node_modules/express/lib/response.js:684:10)
+2025-08-01 18:36:22.85
+290f1743
+User
+at ServerResponse.json (/home/runner/workspace/node_modules/express/lib/response.js:247:10)
+2025-08-01 18:36:22.85
+290f1743
+User
+at /home/runner/workspace/server/server.js:720:21
+2025-08-01 18:36:22.85
+290f1743
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)

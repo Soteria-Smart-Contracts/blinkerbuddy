@@ -663,7 +663,6 @@ app.get('/sync/:id', async (req, res) => {
     let userData = null;
     if (userResult && userResult.ok && userResult.value) {
       userData = userResult.value;
-      console.log(userData)
     } else if (userResult && userResult.id) {
       userData = userResult;
     }
@@ -714,6 +713,7 @@ app.get('/sync/:id', async (req, res) => {
         blinkscore: serverBlinkscore,
         treeStates: serverTreeStates
       });
+      console.log(serverTreeStates);
     }
   } catch (error) {
     console.error('Error syncing user data:', error);
