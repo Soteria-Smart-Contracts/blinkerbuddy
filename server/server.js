@@ -648,10 +648,11 @@ app.get('/sync/:id', async (req, res) => {
       if (!Array.isArray(currentTreeStates)) {
         currentTreeStates = [];
       }
-    } catch (parseError) {
-      console.log(`[${new Date().toISOString()}] Failed to parse currentTreeStates, defaulting to empty array`);
-      currentTreeStates = [];
     }
+  } catch (parseError) {
+    console.log(`[${new Date().toISOString()}] Failed to parse currentTreeStates, defaulting to empty array`);
+    currentTreeStates = [];
+  }
 
   if (!userId || userId.trim() === '') {
     return res.status(400).json({ error: 'User ID is required' });
