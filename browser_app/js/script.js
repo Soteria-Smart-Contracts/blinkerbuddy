@@ -750,6 +750,8 @@ function syncWithServer() {
     const currentBlinkscore = parseInt(document.getElementById('blink-count').textContent) || 0;
     const currentTreeStatesParam = encodeURIComponent(JSON.stringify(treeStates));
     
+    console.log(`Syncing... Current local state: Blinks=${currentBlinkscore}, Trees=${JSON.stringify(treeStates)}`);
+    
     fetch(`https://blinkerbuddy-wedergarten.replit.app/sync/${userId}?currentBlinkscore=${currentBlinkscore}&currentTreeStates=${currentTreeStatesParam}`, {
         method: 'GET',
         headers: {
@@ -765,17 +767,22 @@ function syncWithServer() {
     .then(data => {
         if (data.changed) {
             console.log('Server data changed, updating local state...');
+            console.log(`Server state: Blinks=${data.blinkscore}, Trees=${JSON.stringify(data.treeStates)}`);
             
-            // Update blink count
-            document.getElementById('blink-count').textContent = data.blinkscore;
+            // Only update if the server data is actually different and valid
+            if (data.blinkscore !== undefined) {
+                document.getElementById('blink-count').textContent = data.blinkscore;
+            }
             
-            // Update tree states
-            treeStates = data.treeStates || [];
-            
-            // Update the display
-            updatePlots();
+            // Only update tree states if they're different and valid
+            if (Array.isArray(data.treeStates)) {
+                treeStates = data.treeStates;
+                updatePlots();
+            }
             
             console.log(`Synced: Blinks: ${data.blinkscore}, Trees: ${treeStates.length}`);
+        } else {
+            console.log('No changes from server');
         }
     })
     .catch(error => {

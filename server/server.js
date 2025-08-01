@@ -624,7 +624,15 @@ app.get('/sync/:id', async (req, res) => {
 
     // Check if there are any differences
     const blinkscoreChanged = serverBlinkscore !== currentBlinkscore;
-    const treeStatesChanged = JSON.stringify(serverTreeStates) !== JSON.stringify(currentTreeStates);
+    // Sort arrays before comparison to handle order differences
+    const sortedServerStates = [...serverTreeStates].sort((a, b) => a - b);
+    const sortedCurrentStates = [...currentTreeStates].sort((a, b) => a - b);
+    const treeStatesChanged = JSON.stringify(sortedServerStates) !== JSON.stringify(sortedCurrentStates);
+
+    console.log(`[${new Date().toISOString()}] Sync check for user ${userId}:`);
+    console.log(`  Server: Blinks=${serverBlinkscore}, Trees=${JSON.stringify(serverTreeStates)}`);
+    console.log(`  Client: Blinks=${currentBlinkscore}, Trees=${JSON.stringify(currentTreeStates)}`);
+    console.log(`  Changed: Blinks=${blinkscoreChanged}, Trees=${treeStatesChanged}`);
 
     if (blinkscoreChanged || treeStatesChanged) {
       res.status(200).json({
