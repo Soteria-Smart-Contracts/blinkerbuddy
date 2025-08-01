@@ -776,10 +776,8 @@ function syncWithServer() {
             
             // Only update tree states if they're different and valid
             if (Array.isArray(data.treeStates)) {
-                treeStates = [...data.treeStates]; // Create a copy to ensure it's a proper array
-                localStorage.setItem('treeStates', JSON.stringify(treeStates)); // Update localStorage
+                treeStates = data.treeStates;
                 updatePlots();
-                console.log(`Updated treeStates from server:`, treeStates);
             }
             
             console.log(`Synced: Blinks: ${data.blinkscore}, Trees: ${treeStates.length}`);

@@ -599,7 +599,20 @@ app.get('/reset', async (req, res) => {
 app.get('/sync/:id', async (req, res) => {
   const userId = req.params.id;
   const currentBlinkscore = parseInt(req.query.currentBlinkscore) || 0;
-  const currentTreeStates = req.query.currentTreeStates ? JSON.parse(req.query.currentTreeStates) : [];
+  
+  // Better handling of currentTreeStates parsing
+  let currentTreeStates = [];
+  try {
+    if (req.query.currentTreeStates) {
+      currentTreeStates = JSON.parse(req.query.currentTreeStates);
+      if (!Array.isArray(currentTreeStates)) {
+        currentTreeStates = [];
+      }
+    }
+  } catch (parseError) {
+    console.log(`[${new Date().toISOString()}] Failed to parse currentTreeStates, defaulting to empty array`);
+    currentTreeStates = [];
+  }
 
   if (!userId || userId.trim() === '') {
     return res.status(400).json({ error: 'User ID is required' });
@@ -620,7 +633,7 @@ app.get('/sync/:id', async (req, res) => {
     }
 
     const serverBlinkscore = userData.blinkscore || 0;
-    const serverTreeStates = userData.treeStates || [];
+    const serverTreeStates = Array.isArray(userData.treeStates) ? userData.treeStates : [];
 
     // Check if there are any differences
     const blinkscoreChanged = serverBlinkscore !== currentBlinkscore;
@@ -634,6 +647,7 @@ app.get('/sync/:id', async (req, res) => {
     console.log(`  Client: Blinks=${currentBlinkscore}, Trees=${JSON.stringify(currentTreeStates)}`);
     console.log(`  Changed: Blinks=${blinkscoreChanged}, Trees=${treeStatesChanged}`);
 
+    // Always return the server state when there are changes
     if (blinkscoreChanged || treeStatesChanged) {
       res.status(200).json({
         changed: true,
@@ -642,7 +656,9 @@ app.get('/sync/:id', async (req, res) => {
       });
     } else {
       res.status(200).json({
-        changed: false
+        changed: false,
+        blinkscore: serverBlinkscore,
+        treeStates: serverTreeStates
       });
     }
   } catch (error) {
