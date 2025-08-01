@@ -546,53 +546,7 @@ app.get('/importcheck/:token', async (req, res) => {
   }
 });
 
-// Clear exports endpoint: /clearexports
-app.get('/clearexports', async (req, res) => {
-  try {
-    // Clear all active exports
-    const exportsListResult = await db.list('activeExport:');
-    const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
 
-    let deletedCount = 0;
-    for (const key of exportsList) {
-      await db.delete(key);
-      deletedCount++;
-      console.log(`[${new Date().toISOString()}] Deleted export: ${key}`);
-    }
-
-    // Clear export tokens from all users
-    const usersListResult = await db.list('user:');
-    const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
-
-    let usersUpdated = 0;
-    for (const key of usersList) {
-      const userResult = await db.get(key);
-      let user = null;
-      if (userResult && userResult.ok && userResult.value) {
-        user = userResult.value;
-      } else if (userResult && userResult.id) {
-        user = userResult;
-      }
-
-      if (user && user.exportToken) {
-        user.exportToken = null;
-        await db.set(key, user);
-        usersUpdated++;
-        console.log(`[${new Date().toISOString()}] Cleared export token from user: ${user.username}`);
-      }
-    }
-
-    res.status(200).json({
-      message: 'All active exports have been cleared',
-      deleted_exports: deletedCount,
-      users_updated: usersUpdated,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error clearing exports:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Reset endpoint: /reset (for development purposes)
 app.get('/reset', async (req, res) => {
