@@ -455,6 +455,46 @@ app.get('/blink/:id', async (req, res) =>{
     }
   });
 
+// Reset trees endpoint: /resettrees/:id
+app.get('/resettrees/:id', async (req, res) => {
+  const userId = req.params.id;
+  if (!userId || userId.trim() === '') {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    // Find user by user ID
+    const userResult = await db.get(`user:${userId}`);
+    let userData = null;
+    if (userResult && userResult.ok && userResult.value) {
+      userData = userResult.value;
+    } else if (userResult && userResult.id) {
+      userData = userResult;
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Reset tree states to empty array
+    userData.treeStates = [];
+    await db.set(`user:${userId}`, userData);
+
+    console.log(`[${new Date().toISOString()}] Trees reset for user ${userId} (${userData.username})`);
+    
+    // Return updated user data
+    res.status(200).json({
+      id: userData.id,
+      username: userData.username,
+      blinkscore: userData.blinkscore || 0,
+      treeStates: userData.treeStates
+    });
+  } catch (error) {
+    console.error('Error resetting trees:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Load user ID endpoint: /loaduserid/:id
 app.get('/loaduserid/:id', async (req, res) => {
   const userId = req.params.id;
