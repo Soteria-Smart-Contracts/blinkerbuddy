@@ -794,7 +794,7 @@ document.getElementById('reset-button').addEventListener('click', () => {
         })
         .then(data => {
             console.log('Trees reset on server:', data);
-            treeStates = [];
+            treeStates = data.treeStates || [];
             updatePlots();
         })
         .catch(error => {
