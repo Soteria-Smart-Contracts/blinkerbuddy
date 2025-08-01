@@ -595,6 +595,7 @@ app.get('/reset', async (req, res) => {
   }
 });
 
+// Sync endpoint: /sync/:id (GET version)
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
