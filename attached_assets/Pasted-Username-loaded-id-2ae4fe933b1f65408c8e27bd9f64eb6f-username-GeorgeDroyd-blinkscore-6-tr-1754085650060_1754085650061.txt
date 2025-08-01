@@ -1,0 +1,58 @@
+Username loaded: {id: '2ae4fe933b1f65408c8e27bd9f64eb6f', username: 'GeorgeDroyd', blinkscore: 6, treeStates: '[3,4,5,2,1,0]'}
+script.js:282 Raw tree states from loaduserid: [3,4,5,2,1,0] Type: string
+script.js:304 Tree states loaded successfully: (6) [3, 4, 5, 2, 1, 0]
+script.js:464 updatePlots called with treeStates: (6) [3, 4, 5, 2, 1, 0] Type: object IsArray: true
+script.js:480 Processing 6 tree states: (6) [3, 4, 5, 2, 1, 0]
+script.js:483 Processing tree 0: index=3, type=number
+script.js:497 Successfully updated plot 3
+script.js:483 Processing tree 1: index=4, type=number
+script.js:497 Successfully updated plot 4
+script.js:483 Processing tree 2: index=5, type=number
+script.js:497 Successfully updated plot 5
+script.js:483 Processing tree 3: index=2, type=number
+script.js:497 Successfully updated plot 2
+script.js:483 Processing tree 4: index=1, type=number
+script.js:497 Successfully updated plot 1
+script.js:483 Processing tree 5: index=0, type=number
+script.js:497 Successfully updated plot 0
+script.js:503 updatePlots completed. 6 trees should be visible.
+script.js:918 Starting sync interval...
+inpage.js:1 MetaMask: MetaMask will soon stop reloading pages on network change.
+For more information, see: https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange 
+Set 'ethereum.autoRefreshOnNetworkChange' to 'false' to silence this warning.
+(anonymous) @ inpage.js:1
+setTimeout
+t.exports @ inpage.js:1
+initProvider @ inpage.js:1
+(anonymous) @ inpage.js:1
+(anonymous) @ inpage.js:1
+1../lib/setupWeb3.js @ inpage.js:1
+i @ inpage.js:1
+e @ inpage.js:1
+(anonymous) @ inpage.js:1
+(anonymous) @ contentscript.js:1
+1.@babel/runtime/helpers/interopRequireDefault @ contentscript.js:1
+i @ contentscript.js:1
+e @ contentscript.js:1
+(anonymous) @ contentscript.js:1
+Show 5 more frames
+Show less
+script.js:821 Syncing... Current local state: Blinks=6, Trees=[3,4,5,2,1,0]
+script.js:836 Raw sync response: {changed: true, blinkscore: 6, treeStates: Array(0)}
+script.js:839 Server data changed, updating local state...
+script.js:840 Server state: Blinks=6, Trees=[]
+script.js:863 Updating tree states from server: []
+script.js:464 updatePlots called with treeStates: [] Type: object IsArray: true
+script.js:480 Processing 0 tree states: []
+script.js:503 updatePlots completed. 0 trees should be visible.
+script.js:873 Synced: Blinks: 6, Trees: 0
+script.js:821 Syncing... Current local state: Blinks=6, Trees=[]
+script.js:836 Raw sync response: {changed: false, blinkscore: 6, treeStates: Array(0)}
+script.js:875 No changes from server, but updating from response data...
+script.js:897 Updating tree states from server (no changes): []
+script.js:464 updatePlots called with treeStates: [] Type: object IsArray: true
+script.js:480 Processing 0 tree states: []
+script.js:503 updatePlots completed. 0 trees should be visible.
+script.js:903 Synced (no changes): Blinks: 6, Trees: 0
+script.js:821 Syncing... Current local state: Blinks=6, Trees=[]
+script.js:836 Raw sync response: 
