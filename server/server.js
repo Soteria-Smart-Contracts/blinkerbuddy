@@ -673,7 +673,20 @@ app.get('/sync/:id', async (req, res) => {
     }
 
     const serverBlinkscore = userData.blinkscore || 0;
-    const serverTreeStates = Array.isArray(userData.treeStates) ? userData.treeStates : [];
+    
+    // Parse treeStates - handle both string and array formats
+    let serverTreeStates = userData.treeStates || [];
+    if (typeof serverTreeStates === 'string') {
+      try {
+        serverTreeStates = JSON.parse(serverTreeStates);
+      } catch (parseError) {
+        console.error('Failed to parse server tree states:', parseError);
+        serverTreeStates = [];
+      }
+    }
+    if (!Array.isArray(serverTreeStates)) {
+      serverTreeStates = [];
+    }
 
     // Check if there are any differences
     const blinkscoreChanged = serverBlinkscore !== currentBlinkscore;
