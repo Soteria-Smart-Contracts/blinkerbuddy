@@ -561,6 +561,46 @@ app.get('/clearexports', async (req, res) => {
   }
 });
 
+// Reset trees endpoint: /resettrees/:id
+app.get('/resettrees/:id', async (req, res) => {
+  const userId = req.params.id;
+
+  if (!userId || userId.trim() === '') {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    const userResult = await db.get(`user:${userId}`);
+    let user = null;
+    if (userResult && userResult.ok && userResult.value) {
+      user = userResult.value;
+    } else if (userResult && userResult.id) {
+      user = userResult;
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Reset tree states to empty array
+    user.treeStates = [];
+    await db.set(`user:${userId}`, user);
+
+    console.log(`[${new Date().toISOString()}] Trees reset for user ${userId} (${user.username})`);
+
+    res.status(200).json({
+      id: user.id,
+      username: user.username,
+      blinkscore: user.blinkscore,
+      treeStates: user.treeStates,
+      message: 'Trees reset successfully'
+    });
+  } catch (error) {
+    console.error('Error resetting trees:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Reset endpoint: /reset (for development purposes)
 app.get('/reset', async (req, res) => {
   try {

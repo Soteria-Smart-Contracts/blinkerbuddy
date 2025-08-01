@@ -778,10 +778,37 @@ plots.forEach((plot, index) => {
 
 // Event listener for reset button
 document.getElementById('reset-button').addEventListener('click', () => {
-    treeStates = [];
-    localStorage.setItem('treeStates', JSON.stringify(treeStates));
+    if (userId) {
+        // Call server reset endpoint
+        fetch(`https://blinkerbuddy-wedergarten.replit.app/resettrees/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Trees reset on server:', data);
+            treeStates = [];
+            updatePlots();
+        })
+        .catch(error => {
+            console.error('Error resetting trees on server:', error);
+            // Fallback to local reset if server fails
+            treeStates = [];
+            updatePlots();
+        });
+    } else {
+        // If no userId, just reset locally
+        treeStates = [];
+        updatePlots();
+    }
     console.log('Trees reset!');
-    updatePlots();
 });
 
 // Sync function to check for updates from server
