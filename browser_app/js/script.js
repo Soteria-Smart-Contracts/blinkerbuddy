@@ -747,16 +747,13 @@ function syncWithServer() {
     if (!userId) return;
 
     const currentBlinkscore = parseInt(document.getElementById('blink-count').textContent) || 0;
+    const currentTreeStatesParam = encodeURIComponent(JSON.stringify(treeStates));
     
-    fetch(`https://blinkerbuddy-wedergarten.replit.app/sync/${userId}`, {
-        method: 'POST',
+    fetch(`https://blinkerbuddy-wedergarten.replit.app/sync/${userId}?currentBlinkscore=${currentBlinkscore}&currentTreeStates=${currentTreeStatesParam}`, {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            currentBlinkscore: currentBlinkscore,
-            currentTreeStates: treeStates
-        })
+        }
     })
     .then(response => {
         if (!response.ok) {

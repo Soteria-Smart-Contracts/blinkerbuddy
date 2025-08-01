@@ -596,6 +596,53 @@ app.get('/reset', async (req, res) => {
 });
 
 // Sync endpoint: /sync/:id (GET version)
+app.get('/sync/:id', async (req, res) => {
+  const userId = req.params.id;
+  const currentBlinkscore = parseInt(req.query.currentBlinkscore) || 0;
+  const currentTreeStates = req.query.currentTreeStates ? JSON.parse(req.query.currentTreeStates) : [];
+
+  if (!userId || userId.trim() === '') {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    // Find user by user ID
+    const userResult = await db.get(`user:${userId}`);
+    let userData = null;
+    if (userResult && userResult.ok && userResult.value) {
+      userData = userResult.value;
+    } else if (userResult && userResult.id) {
+      userData = userResult;
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const serverBlinkscore = userData.blinkscore || 0;
+    const serverTreeStates = userData.treeStates || [];
+
+    // Check if there are any differences
+    const blinkscoreChanged = serverBlinkscore !== currentBlinkscore;
+    const treeStatesChanged = JSON.stringify(serverTreeStates) !== JSON.stringify(currentTreeStates);
+
+    if (blinkscoreChanged || treeStatesChanged) {
+      res.status(200).json({
+        changed: true,
+        blinkscore: serverBlinkscore,
+        treeStates: serverTreeStates
+      });
+    } else {
+      res.status(200).json({
+        changed: false
+      });
+    }
+  } catch (error) {
+    console.error('Error syncing user data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
