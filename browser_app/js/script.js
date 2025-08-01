@@ -283,11 +283,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('username-tooltip').textContent = username;
                     document.getElementById('blink-count').textContent = data.blinkscore || 0; // Set blink score
                     document.getElementById('username-modal').style.display = 'none'; // Hide the modal
-                    //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
-                    //the treestate is a string which needs to be parsed into an array, one liner, i know its a string already
-                    treeStates = (data.treeStates); // Assign to global treeStates
-                    //parse the treeStates if it's a string in one line
-                    treeStates = JSON.parse(treeStates);
+                    // Load tree states (already an array from server)
+                    treeStates = data.treeStates || [];
                     console.log('Tree states loaded:', treeStates);
                     updatePlots(); // Update the plots with loaded tree states
                     startSyncInterval(); // Start syncing with server
