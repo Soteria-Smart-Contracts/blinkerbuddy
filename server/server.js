@@ -390,9 +390,7 @@ app.get('/activeexports', async (req, res) => {
 //add a new endpoint called /blink/:id, where if called increments the blinkscore of the user with the given id by 1
 app.get('/blink/:id', async (req, res) =>{
     const userId = req.params.id;
-    const treeStates = req.query.treeStates; // Getting the treeState array from query parameters
-
-  console.log(treeStates)
+    const treeIndex = req.query.tree; // Getting the specific tree index being planted
 
     if (!userId || userId.trim() === '') {
       return res.status(400).json({ error: 'User ID is required' });
@@ -412,12 +410,37 @@ app.get('/blink/:id', async (req, res) =>{
       }
 
       user.blinkscore = (user.blinkscore || 0) + 1;
-      user.treeStates = treeStates || []; // Adding treeState to the user data
+      
+      // Parse existing treeStates properly
+      let currentTreeStates = [];
+      if (user.treeStates) {
+        if (typeof user.treeStates === 'string') {
+          try {
+            currentTreeStates = JSON.parse(user.treeStates);
+          } catch (parseError) {
+            console.error('Failed to parse existing treeStates:', parseError);
+            currentTreeStates = [];
+          }
+        } else if (Array.isArray(user.treeStates)) {
+          currentTreeStates = user.treeStates;
+        }
+      }
+      
+      // Add the new tree if provided and not already planted
+      if (treeIndex !== undefined && treeIndex !== null) {
+        const treeIndexNum = parseInt(treeIndex);
+        if (!isNaN(treeIndexNum) && !currentTreeStates.includes(treeIndexNum)) {
+          currentTreeStates.push(treeIndexNum);
+          console.log(`[${new Date().toISOString()}] Tree planted at index ${treeIndexNum} for user ${userId}`);
+        }
+      }
+      
+      // Store as array (not string)
+      user.treeStates = currentTreeStates;
 
       await db.set(`user:${userId}`, user);
 
       console.log(`[${new Date().toISOString()}] Blinkscore incremented for user ${userId}`);
-
       console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking!`);
 
       res.status(200).json({
@@ -455,12 +478,28 @@ app.get('/loaduserid/:id', async (req, res) => {
     }
 
     console.log(`[${new Date().toISOString()}] User ${userData.username} logging in...`)
+    
+    // Parse treeStates properly
+    let parsedTreeStates = [];
+    if (userData.treeStates) {
+      if (typeof userData.treeStates === 'string') {
+        try {
+          parsedTreeStates = JSON.parse(userData.treeStates);
+        } catch (parseError) {
+          console.error('Failed to parse treeStates on load:', parseError);
+          parsedTreeStates = [];
+        }
+      } else if (Array.isArray(userData.treeStates)) {
+        parsedTreeStates = userData.treeStates;
+      }
+    }
+    
     // Return user data, including treeState
     res.status(200).json({
       id: userData.id,
       username: userData.username,
       blinkscore: userData.blinkscore || 0,
-      treeStates: userData.treeStates || []
+      treeStates: parsedTreeStates
     });
   } catch (error) {
     console.error('Error loading user:', error);
@@ -634,7 +673,21 @@ app.get('/sync/:id', async (req, res) => {
     }
 
     const serverBlinkscore = userData.blinkscore || 0;
-    const serverTreeStates = Array.isArray(userData.treeStates) ? userData.treeStates : [];
+    
+    // Parse server treeStates properly
+    let serverTreeStates = [];
+    if (userData.treeStates) {
+      if (typeof userData.treeStates === 'string') {
+        try {
+          serverTreeStates = JSON.parse(userData.treeStates);
+        } catch (parseError) {
+          console.error('Failed to parse server treeStates:', parseError);
+          serverTreeStates = [];
+        }
+      } else if (Array.isArray(userData.treeStates)) {
+        serverTreeStates = userData.treeStates;
+      }
+    }
 
     // Check if there are any differences
     const blinkscoreChanged = serverBlinkscore !== currentBlinkscore;
