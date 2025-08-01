@@ -683,6 +683,7 @@ function displayGnome() {
     }, 10000); // Display for 10 seconds
 }
 
+
 // Get a random gnome message
 function getRandomGnomeMessage() {
     const messages = [
@@ -749,6 +750,7 @@ document.getElementById('reset-button').addEventListener('click', () => {
 //         updateBlinkStats();
 //     }
 // });
+//this code is now 
 
 // localStorage.removeItem('bbUsername');
 //conver this to browser extension eqivalent
