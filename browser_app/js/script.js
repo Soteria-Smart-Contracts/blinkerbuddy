@@ -234,7 +234,7 @@ function stopSirenSound() {
 }
 
 // Load saved states from storage
-treeStates = [];
+treeStates = []; // Initialize as empty array
 
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -440,6 +440,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Update the plots to reflect the current state of trees
 function updatePlots() {
+    // Ensure treeStates is always an array
+    if (!Array.isArray(treeStates)) {
+        treeStates = [];
+    }
     console.log(treeStates);
     plantedTreesCount = 0; // Reset plantedTreesCount
     // Clear all plots
