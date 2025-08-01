@@ -390,12 +390,16 @@ app.get('/activeexports', async (req, res) => {
 //add a new endpoint called /blink/:id, where if called increments the blinkscore of the user with the given id by 1
 app.get('/blink/:id', async (req, res) =>{
     const userId = req.params.id;
-    const treeStates = req.query.treeStates; // Getting the treeState array from query parameters
+    const treeIndex = req.query.tree; // Getting the specific tree index that was planted
 
-  console.log(treeStates)
+    console.log(`Tree planted at index: ${treeIndex}`);
 
     if (!userId || userId.trim() === '') {
       return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    if (treeIndex === undefined || treeIndex === null) {
+      return res.status(400).json({ error: 'Tree index is required' });
     }
 
     try {
@@ -411,14 +415,29 @@ app.get('/blink/:id', async (req, res) =>{
         return res.status(404).json({ error: 'User not found' });
       }
 
-      user.blinkscore = (user.blinkscore || 0) + 1;
-      user.treeStates = treeStates || []; // Adding treeState to the user data
+      // Initialize treeStates if not exists
+      if (!user.treeStates || !Array.isArray(user.treeStates)) {
+        user.treeStates = [];
+      }
 
-      await db.set(`user:${userId}`, user);
+      // Parse tree index to integer
+      const parsedTreeIndex = parseInt(treeIndex);
+      if (isNaN(parsedTreeIndex) || parsedTreeIndex < 0) {
+        return res.status(400).json({ error: 'Invalid tree index' });
+      }
 
-      console.log(`[${new Date().toISOString()}] Blinkscore incremented for user ${userId}`);
+      // Add the tree to treeStates if not already present
+      if (!user.treeStates.includes(parsedTreeIndex)) {
+        user.treeStates.push(parsedTreeIndex);
+        user.blinkscore = (user.blinkscore || 0) + 1;
+        
+        await db.set(`user:${userId}`, user);
 
-      console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking!`);
+        console.log(`[${new Date().toISOString()}] Tree ${parsedTreeIndex} planted for user ${userId} (${user.username})`);
+        console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking! New score: ${user.blinkscore}`);
+      } else {
+        console.log(`[${new Date().toISOString()}] Tree ${parsedTreeIndex} already exists for user ${userId}`);
+      }
 
       res.status(200).json({
         id: user.id,

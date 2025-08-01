@@ -589,32 +589,53 @@ function startTimer(plot, index) {
             clearInterval(interval);
             playBeep(1500, 150); // Highest beep at the moment of planting
             plot.classList.add('active');
-            treeStates.push(index);
-            const blinkCountElement = document.getElementById('blink-count');
-            const currentCount = parseInt(blinkCountElement.textContent) || 0;
-            blinkCountElement.textContent = currentCount + 1;
-            localStorage.setItem('treeStates', JSON.stringify(treeStates));
-            console.log('Tree planted!');
+            
+            console.log(`Planting tree at index ${index}`);
+            
+            // Send to server first, then update local state based on server response
+            if (userId) {
+                const url = `https://blinkerbuddy-wedergarten.replit.app/blink/${userId}?tree=${index}`;
+              
+                fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Network response was not ok');
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('Tree planted on server:', data);
+                    
+                    // Update local state with server response
+                    treeStates = data.treeStates || [];
+                    document.getElementById('blink-count').textContent = data.blinkscore || 0;
+                    
+                    // Update display
+                    updatePlots();
+                })
+                .catch(err => {
+                    console.error('Error planting tree on server:', err);
+                    // Fallback: update local state if server fails
+                    treeStates.push(index);
+                    const blinkCountElement = document.getElementById('blink-count');
+                    const currentCount = parseInt(blinkCountElement.textContent) || 0;
+                    blinkCountElement.textContent = currentCount + 1;
+                    updatePlots();
+                });
+            } else {
+                // No user ID, update locally only
+                treeStates.push(index);
+                const blinkCountElement = document.getElementById('blink-count');
+                const currentCount = parseInt(blinkCountElement.textContent) || 0;
+                blinkCountElement.textContent = currentCount + 1;
+                updatePlots();
+            }
+            
+            console.log('Tree planted locally!');
             timerElement.textContent = 'Planted!';
             timerElement.style.fontSize = '16px';
             startBlinkerAnimation(plot);
-            //send an api request to the server to update the blink count for the user by doing /blink/:id
-            if (userId) {
-                const url =
-                `https://blinkerbuddy-wedergarten.replit.app/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
-              
-              fetch(url, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-              })
-                .then(r => {
-                  if (!r.ok) throw new Error('Network response was not ok');
-                  return r.json();
-                })
-                .then(data => console.log('Blink count updated:', data))
-                .catch(err => console.error('Error updating blink count:', err));
-              
-            }
         }
     }, 100);
 }
@@ -652,39 +673,36 @@ function startBlinkerAnimation(plot) {
             const plotIndexForDeath = parseInt(plot.dataset.index); // Assuming plots have 'data-index'
 
             setTimeout(() => {
-                // Find the tree in treeStates that corresponds to plotIndexForDeath to mark it dead
-                // This logic assumes treeStates stores indices that match plot.dataset.index
-                const treeStateIndexToRemove = treeStates.indexOf(plotIndexForDeath);
-                if (treeStateIndexToRemove > -1) {
-                    // Marking as 'dead' isn't a current property. We remove it or mark it.
-                    // For now, let's stick to removing it as per original reset logic.
-                    // Or, if 'dead' was a new concept, it needs to be defined in how treeStates are handled.
-                    // The original code had 'treeStates[index].dead = true;' which implies treeStates stores objects,
-                    // but it actually stores indices. This line was likely non-functional as intended.
-                    // I will revert to a simpler logic of removing the tree or assume 'index' was a bug.
-                    // Given the original code, 'index' was not passed to startBlinkerAnimation.
-                    // The simplest interpretation is that the timeout was meant to clear the specific plot that just blinked.
-
-                    // If the intention is to remove the tree that just blinked:
+                // Get the plot index for the tree that should die after 2 hours
+                const plotIndexForDeath = parseInt(plot.dataset.index);
+                
+                if (!isNaN(plotIndexForDeath)) {
+                    console.log(`Removing tree at plot ${plotIndexForDeath} after 2 hours`);
+                    
+                    // Remove from treeStates array
                     const treeToRemoveIndex = treeStates.indexOf(plotIndexForDeath);
                     if (treeToRemoveIndex !== -1) {
-                        treeStates.splice(treeToRemoveIndex, 1); // Remove the tree
-                    localStorage.setItem('treeStates', JSON.stringify(treeStates));
-                    console.log(`Tree at plot ${plotIndexForDeath} removed after timeout.`);
-                    updatePlots(); // Update display after removal
+                        treeStates.splice(treeToRemoveIndex, 1);
+                        console.log(`Tree at plot ${plotIndexForDeath} removed from treeStates`);
+                        
+                        // Update server if user is logged in
+                        if (userId) {
+                            // Since we don't have a specific "remove tree" endpoint, 
+                            // we'll rely on sync to handle the state difference
+                            console.log('Tree removal will be handled by sync mechanism');
+                        }
+                        
+                        updatePlots(); // Update display after removal
                     } else {
-                         // If it was already removed or not found, just clear the plot visually if it wasn't.
+                        // If it wasn't found in treeStates, just clear the plot visually
                         plot.classList.remove('active');
                         plot.innerHTML = '';
                     }
                 } else {
-                     plot.classList.remove('active');
-                     plot.innerHTML = '';
+                    console.error('Could not determine plot index for tree removal');
+                    plot.classList.remove('active');
+                    plot.innerHTML = '';
                 }
-                // plantedTreesCount should also be decremented if a tree is removed.
-                // This was also missing in the original logic for the 'dead' tree.
-                // updatePlots() will recount plantedTreesCount if it's based on treeStates.length
-
             }, 7200000); // 2 hours
         }
     }, 200);
@@ -768,6 +786,9 @@ function getRandomGnomeMessage() {
 
 // Event listeners for plots
 plots.forEach((plot, index) => {
+    // Add data-index attribute for proper identification
+    plot.dataset.index = index;
+    
     plot.addEventListener('click', () => {
         if (!isBlinking && !treeStates.includes(index)) {
             isBlinking = true;
@@ -813,9 +834,19 @@ document.getElementById('reset-button').addEventListener('click', () => {
 
 // Sync function to check for updates from server
 function syncWithServer() {
-    if (!userId) return;
+    if (!userId) {
+        console.log('Sync skipped: No user ID');
+        return;
+    }
 
     const currentBlinkscore = parseInt(document.getElementById('blink-count').textContent) || 0;
+    
+    // Ensure treeStates is always an array before syncing
+    if (!Array.isArray(treeStates)) {
+        console.warn('treeStates is not an array during sync, resetting to empty array');
+        treeStates = [];
+    }
+    
     const currentTreeStatesParam = encodeURIComponent(JSON.stringify(treeStates));
     
     console.log(`Syncing... Current local state: Blinks=${currentBlinkscore}, Trees=${JSON.stringify(treeStates)}`);
