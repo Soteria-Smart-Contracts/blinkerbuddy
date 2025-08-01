@@ -2,22 +2,12 @@ const express = require('express');
 const crypto = require('crypto');
 const Database = require('@replit/database');
 const QRCode = require('qrcode');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
 
 // Initialize Replit Database
 const db = new Database();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  },
-  allowEIO3: true
-});
 
 // Middleware - CORS configuration
 app.use(require('cors')({
@@ -29,25 +19,10 @@ app.use(require('cors')({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve Socket.IO client files
-app.get('/socket.io/*', (req, res, next) => {
-  // Let Socket.IO handle its own routes
-  next();
-});
-
 // Helper function to generate 32-bit hexadecimal ID
 function generateHexId() {
   return crypto.randomBytes(16).toString('hex');
 }
-
-// WebSocket connection handling
-io.on('connection', (socket) => {
-  console.log(`[${new Date().toISOString()}] WebSocket client connected: ${socket.id}`);
-  
-  socket.on('disconnect', () => {
-    console.log(`[${new Date().toISOString()}] WebSocket client disconnected: ${socket.id}`);
-  });
-});
 
 // Helper function to remove expired token
 async function removeExpiredToken(exportToken, userId) {
@@ -445,21 +420,6 @@ app.get('/blink/:id', async (req, res) =>{
 
       console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking!`);
 
-      // Broadcast blinker event to all connected WebSocket clients
-      const blinkEvent = {
-        type: 'blinker_taken',
-        timestamp: new Date().toISOString(),
-        user: {
-          id: user.id,
-          username: user.username,
-          blinkscore: user.blinkscore
-        },
-        treeStates: user.treeStates
-      };
-      
-      io.emit('blinker_event', blinkEvent);
-      console.log(`[${new Date().toISOString()}] Broadcasted blinker event for ${user.username}`);
-
       res.status(200).json({
         id: user.id,
         username: user.username,
@@ -553,56 +513,53 @@ app.get('/importcheck/:token', async (req, res) => {
   }
 });
 
-// Sync endpoint: /sync/:id
-app.post('/sync/:id', async (req, res) => {
-  const userId = req.params.id;
-  const { currentBlinkscore, currentTreeStates } = req.body;
-
-  if (!userId || userId.trim() === '') {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
-
+// Clear exports endpoint: /clearexports
+app.get('/clearexports', async (req, res) => {
   try {
-    const userResult = await db.get(`user:${userId}`);
-    let user = null;
-    if (userResult && userResult.ok && userResult.value) {
-      user = userResult.value;
-    } else if (userResult && userResult.id) {
-      user = userResult;
+    // Clear all active exports
+    const exportsListResult = await db.list('activeExport:');
+    const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
+
+    let deletedCount = 0;
+    for (const key of exportsList) {
+      await db.delete(key);
+      deletedCount++;
+      console.log(`[${new Date().toISOString()}] Deleted export: ${key}`);
     }
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    // Clear export tokens from all users
+    const usersListResult = await db.list('user:');
+    const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
+
+    let usersUpdated = 0;
+    for (const key of usersList) {
+      const userResult = await db.get(key);
+      let user = null;
+      if (userResult && userResult.ok && userResult.value) {
+        user = userResult.value;
+      } else if (userResult && userResult.id) {
+        user = userResult;
+      }
+
+      if (user && user.exportToken) {
+        user.exportToken = null;
+        await db.set(key, user);
+        usersUpdated++;
+        console.log(`[${new Date().toISOString()}] Cleared export token from user: ${user.username}`);
+      }
     }
 
-    const serverBlinkscore = user.blinkscore || 0;
-    const serverTreeStates = user.treeStates || [];
-
-    // Check if there are any differences
-    const blinkscoreChanged = serverBlinkscore !== currentBlinkscore;
-    const treeStatesChanged = JSON.stringify(serverTreeStates) !== JSON.stringify(currentTreeStates);
-
-    if (blinkscoreChanged || treeStatesChanged) {
-      // Return updated data
-      res.status(200).json({
-        changed: true,
-        blinkscore: serverBlinkscore,
-        treeStates: serverTreeStates,
-        username: user.username
-      });
-    } else {
-      // No changes
-      res.status(200).json({
-        changed: false
-      });
-    }
+    res.status(200).json({
+      message: 'All active exports have been cleared',
+      deleted_exports: deletedCount,
+      users_updated: usersUpdated,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('Error syncing user data:', error);
+    console.error('Error clearing exports:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
 
 // Reset endpoint: /reset (for development purposes)
 app.get('/reset', async (req, res) => {
@@ -639,7 +596,6 @@ app.get('/reset', async (req, res) => {
 });
 
 // Start server
-httpServer.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
-  console.log(`WebSocket server ready for connections`);
 });
