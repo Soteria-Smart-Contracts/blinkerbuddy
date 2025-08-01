@@ -639,7 +639,7 @@ app.get('/reset', async (req, res) => {
 app.get('/sync/:id', async (req, res) => {
   const userId = req.params.id;
   const currentBlinkscore = parseInt(req.query.currentBlinkscore) || 0;
-  
+
   // Better handling of currentTreeStates parsing
   let currentTreeStates = [];
   try {
@@ -648,11 +648,10 @@ app.get('/sync/:id', async (req, res) => {
       if (!Array.isArray(currentTreeStates)) {
         currentTreeStates = [];
       }
+    } catch (parseError) {
+      console.log(`[${new Date().toISOString()}] Failed to parse currentTreeStates, defaulting to empty array`);
+      currentTreeStates = [];
     }
-  } catch (parseError) {
-    console.log(`[${new Date().toISOString()}] Failed to parse currentTreeStates, defaulting to empty array`);
-    currentTreeStates = [];
-  }
 
   if (!userId || userId.trim() === '') {
     return res.status(400).json({ error: 'User ID is required' });
