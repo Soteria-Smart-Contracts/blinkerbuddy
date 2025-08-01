@@ -717,7 +717,9 @@ app.get('/sync/:id', async (req, res) => {
     }
   } catch (error) {
     console.error('Error syncing user data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
 

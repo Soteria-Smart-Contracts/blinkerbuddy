@@ -865,74 +865,42 @@ function syncWithServer() {
     })
     .then(data => {
         console.log('Raw sync response:', data);
+        console.log('Server treeStates type:', typeof data.treeStates, 'Value:', data.treeStates);
         
-        if (data.changed) {
-            console.log('Server data changed, updating local state...');
-            console.log(`Server state: Blinks=${data.blinkscore}, Trees=${JSON.stringify(data.treeStates)}`);
-            
-            // Only update if the server data is actually different and valid
-            if (data.blinkscore !== undefined) {
-                document.getElementById('blink-count').textContent = data.blinkscore;
-            }
-            
-            // Handle tree states with better validation
-            if (data.treeStates !== undefined) {
-                let newTreeStates = data.treeStates;
-                
-                // If it's a string, try to parse it
-                if (typeof newTreeStates === 'string') {
-                    try {
-                        newTreeStates = JSON.parse(newTreeStates);
-                    } catch (parseError) {
-                        console.error('Failed to parse tree states string:', parseError);
-                        newTreeStates = [];
-                    }
-                }
-                
-                // Ensure it's an array
-                if (Array.isArray(newTreeStates)) {
-                    console.log('Updating tree states from server:', newTreeStates);
-                    treeStates = newTreeStates;
-                    updatePlots();
-                } else {
-                    console.error('Tree states is not an array:', newTreeStates);
-                    treeStates = [];
-                    updatePlots();
-                }
-            }
-            
-            console.log(`Synced: Blinks: ${data.blinkscore}, Trees: ${treeStates.length}`);
-        } else {
-            console.log('No changes from server, but updating from response data...');
-            
-            // Even when changed=false, we should still update from server data
-            if (data.blinkscore !== undefined) {
-                document.getElementById('blink-count').textContent = data.blinkscore;
-            }
-            
-            if (data.treeStates !== undefined) {
-                let newTreeStates = data.treeStates;
-                
-                // If it's a string, try to parse it
-                if (typeof newTreeStates === 'string') {
-                    try {
-                        newTreeStates = JSON.parse(newTreeStates);
-                    } catch (parseError) {
-                        console.error('Failed to parse tree states string:', parseError);
-                        newTreeStates = [];
-                    }
-                }
-                
-                // Ensure it's an array
-                if (Array.isArray(newTreeStates)) {
-                    console.log('Updating tree states from server (no changes):', newTreeStates);
-                    treeStates = newTreeStates;
-                    updatePlots();
-                }
-            }
-            
-            console.log(`Synced (no changes): Blinks: ${data.blinkscore}, Trees: ${treeStates.length}`);
+        // Always update from server data regardless of changed flag
+        if (data.blinkscore !== undefined) {
+            document.getElementById('blink-count').textContent = data.blinkscore;
         }
+        
+        // Handle tree states - server should now always send arrays
+        if (data.treeStates !== undefined) {
+            let newTreeStates = data.treeStates;
+            
+            // Server should send arrays, but handle string just in case
+            if (typeof newTreeStates === 'string') {
+                try {
+                    newTreeStates = JSON.parse(newTreeStates);
+                    console.log('Parsed string treeStates:', newTreeStates);
+                } catch (parseError) {
+                    console.error('Failed to parse tree states string:', parseError);
+                    newTreeStates = [];
+                }
+            }
+            
+            // Ensure it's an array and update
+            if (Array.isArray(newTreeStates)) {
+                console.log(`Updating tree states from server: ${JSON.stringify(newTreeStates)}`);
+                treeStates = newTreeStates;
+                updatePlots();
+            } else {
+                console.error('Tree states is not an array after processing:', newTreeStates);
+                treeStates = [];
+                updatePlots();
+            }
+        }
+        
+        const changeMessage = data.changed ? 'Server data changed' : 'No changes from server';
+        console.log(`${changeMessage}: Blinks=${data.blinkscore}, Trees=${treeStates.length}`);
     })
     .catch(error => {
         console.error('Error syncing with server:', error);
