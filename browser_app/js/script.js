@@ -344,6 +344,83 @@ document.addEventListener('DOMContentLoaded', () => {
             tooltip.style.visibility = 'hidden';
             tooltip.style.opacity = '0';
         });
+
+        const importAccountButton = document.getElementById('import-account-button');
+        const qrScannerContainer = document.getElementById('qr-scanner-container');
+        const qrScannerCancel = document.getElementById('qr-scanner-cancel');
+        const usernameModal = document.getElementById('username-modal');
+
+        let html5QrCode;
+
+        importAccountButton.addEventListener('click', () => {
+            usernameModal.style.display = 'none';
+            qrScannerContainer.style.display = 'block';
+
+            html5QrCode = new Html5Qrcode("qr-reader");
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                /* handle success */
+                console.log(`Code matched = ${decodedText}`, decodedResult);
+                html5QrCode.stop().then(ignore => {
+                    // QR Code scanning is stopped.
+                    try {
+                        const url = new URL(decodedText);
+                        const importId = url.searchParams.get('id');
+                        if (importId) {
+                            fetch(`https://blinkerbuddy-wedergarten.replit.app/import/${importId}`)
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Network response was not ok');
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    console.log('Imported data:', data);
+                                    const { user } = data;
+                                    userId = user.id;
+                                    localStorage.setItem('blinkerUID', userId);
+                                    document.getElementById('username-tooltip').textContent = user.username;
+                                    document.getElementById('blink-count').textContent = user.blinkscore || 0;
+                                    usernameModal.style.display = 'none';
+                                    qrScannerContainer.style.display = 'none';
+                                    // You might want to load the user's tree states here as well
+                                })
+                                .catch(error => {
+                                    console.error('Error importing data:', error);
+                                    alert('Error importing data. Please try again later.');
+                                    qrScannerContainer.style.display = 'none';
+                                    usernameModal.style.display = 'flex';
+                                });
+                        } else {
+                            throw new Error("No id found in QR code");
+                        }
+                    } catch (e) {
+                        console.error("Error processing QR code:", e);
+                        alert("Invalid QR code.");
+                        qrScannerContainer.style.display = 'none';
+                        usernameModal.style.display = 'flex';
+                    }
+                }).catch(err => {
+                    // Stop failed, handle it.
+                    console.log("Failed to stop QR code scanner.", err);
+                });
+            };
+
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            // If you want to prefer back camera
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+        });
+
+        qrScannerCancel.addEventListener('click', () => {
+            if (html5QrCode) {
+                html5QrCode.stop().then(ignore => {
+                    qrScannerContainer.style.display = 'none';
+                    usernameModal.style.display = 'flex';
+                }).catch(err => {
+                    console.log("Failed to stop QR code scanner.", err);
+                });
+            }
+        });
     }
 });
 
