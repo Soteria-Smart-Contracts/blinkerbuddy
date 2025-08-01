@@ -43,8 +43,6 @@ async function removeExpiredToken(exportToken, userId) {
       user.exportToken = null;
       await db.set(`user:${userId}`, user);
     }
-
-    console.log(`[${new Date().toISOString()}] Export token expired and removed: ${exportToken.substring(0, 8)}...`);
   } catch (error) {
     console.error('Error removing expired token:', error);
   }
@@ -68,9 +66,6 @@ app.get('/register/:username', async (req, res) => {
     const usersListResult = await db.list('user:');
     const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
 
-    console.log(`[${new Date().toISOString()}] Checking for duplicate username: ${username}`);
-    console.log(`[${new Date().toISOString()}] Found ${usersList.length} existing users`);
-
     for (const key of usersList) {
       const userResult = await db.get(key);
       // Handle both direct user object and wrapped response
@@ -81,10 +76,7 @@ app.get('/register/:username', async (req, res) => {
         userData = userResult;
       }
 
-      console.log(`[${new Date().toISOString()}] Checking user ${key}: ${userData ? userData.username : 'no data'}`);
-
       if (userData && userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
-        console.log(`[${new Date().toISOString()}] Username '${username}' already exists!`);
         return res.status(409).json({ error: 'Username already exists' });
       }
     }
@@ -99,7 +91,6 @@ app.get('/register/:username', async (req, res) => {
     };
 
     await db.set(`user:${userId}`, newUser);
-    console.log(`[${new Date().toISOString()}] User registered:`, { id: userId, username: username });
 
     res.status(200).json({
       id: userId,
@@ -163,7 +154,6 @@ app.get('/export/:username', async (req, res) => {
     };
 
     await db.set(`activeExport:${exportToken}`, activeExportData);
-    console.log(`[${new Date().toISOString()}] Stored active export:`, activeExportData);
 
     // Set individual timeout to clear token after exactly 3 minutes
     setTimeout(() => {
@@ -284,11 +274,8 @@ app.get('/all', async (req, res) => {
     const usersListResult = await db.list('user:');
     const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
 
-    console.log(`[${new Date().toISOString()}] Found ${usersList.length} user keys in /all`);
-
     for (const key of usersList) {
       const userResult = await db.get(key);
-      console.log(`[${new Date().toISOString()}] Retrieved data for key ${key}:`, userResult);
 
       // Handle both direct user object and wrapped response
       let user = null;
@@ -304,12 +291,8 @@ app.get('/all', async (req, res) => {
           username: user.username,
           blinkscore: user.blinkscore || 0
         });
-      } else {
-        console.log(`[${new Date().toISOString()}] Invalid user data for key ${key}:`, user);
       }
     }
-
-    console.log(`[${new Date().toISOString()}] Final users array:`, allUsers);
 
     const responseData = {
       users: allUsers,
@@ -344,7 +327,6 @@ app.get('/activeexports', async (req, res) => {
 
     for (const key of exportsList) {
       const exportResult = await db.get(key);
-      console.log(`[${new Date().toISOString()}] Retrieved export data for key ${key}:`, exportResult);
 
       // Handle both direct export object and wrapped response
       let exportData = null;
@@ -368,11 +350,7 @@ app.get('/activeexports', async (req, res) => {
             expiresAt: new Date(expiresAt).toISOString(),
             timeRemaining: Math.max(0, Math.ceil((expiresAt - now) / 1000)) // seconds remaining
           });
-        } else {
-          console.log(`[${new Date().toISOString()}] Skipping export with invalid timestamps:`, exportData);
         }
-      } else {
-        console.log(`[${new Date().toISOString()}] No valid export data found for key ${key}:`, exportData);
       }
     }
 
@@ -418,7 +396,6 @@ app.get('/blink/:id', async (req, res) =>{
           try {
             currentTreeStates = JSON.parse(user.treeStates);
           } catch (parseError) {
-            console.error('Failed to parse existing treeStates:', parseError);
             currentTreeStates = [];
           }
         } else if (Array.isArray(user.treeStates)) {
@@ -431,7 +408,6 @@ app.get('/blink/:id', async (req, res) =>{
         const treeIndexNum = parseInt(treeIndex);
         if (!isNaN(treeIndexNum) && !currentTreeStates.includes(treeIndexNum)) {
           currentTreeStates.push(treeIndexNum);
-          console.log(`[${new Date().toISOString()}] Tree planted at index ${treeIndexNum} for user ${userId}`);
         }
       }
       
@@ -440,7 +416,6 @@ app.get('/blink/:id', async (req, res) =>{
 
       await db.set(`user:${userId}`, user);
 
-      console.log(`[${new Date().toISOString()}] Blinkscore incremented for user ${userId}`);
       console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking!`);
 
       res.status(200).json({
@@ -479,8 +454,6 @@ app.get('/resettrees/:id', async (req, res) => {
     // Reset tree states to empty array
     userData.treeStates = [];
     await db.set(`user:${userId}`, userData);
-
-    console.log(`[${new Date().toISOString()}] Trees reset for user ${userId} (${userData.username})`);
     
     // Return updated user data
     res.status(200).json({
@@ -526,7 +499,6 @@ app.get('/loaduserid/:id', async (req, res) => {
         try {
           parsedTreeStates = JSON.parse(userData.treeStates);
         } catch (parseError) {
-          console.error('Failed to parse treeStates on load:', parseError);
           parsedTreeStates = [];
         }
       } else if (Array.isArray(userData.treeStates)) {
@@ -603,7 +575,6 @@ app.get('/clearexports', async (req, res) => {
     for (const key of exportsList) {
       await db.delete(key);
       deletedCount++;
-      console.log(`[${new Date().toISOString()}] Deleted export: ${key}`);
     }
 
     // Clear export tokens from all users
@@ -624,7 +595,6 @@ app.get('/clearexports', async (req, res) => {
         user.exportToken = null;
         await db.set(key, user);
         usersUpdated++;
-        console.log(`[${new Date().toISOString()}] Cleared export token from user: ${user.username}`);
       }
     }
 
@@ -689,7 +659,6 @@ app.get('/sync/:id', async (req, res) => {
       }
     }
   } catch (parseError) {
-    console.log(`[${new Date().toISOString()}] Failed to parse currentTreeStates, defaulting to empty array`);
     currentTreeStates = [];
   }
 
@@ -720,7 +689,6 @@ app.get('/sync/:id', async (req, res) => {
         try {
           serverTreeStates = JSON.parse(userData.treeStates);
         } catch (parseError) {
-          console.error('Failed to parse server treeStates:', parseError);
           serverTreeStates = [];
         }
       } else if (Array.isArray(userData.treeStates)) {
@@ -735,11 +703,6 @@ app.get('/sync/:id', async (req, res) => {
     const sortedCurrentStates = [...currentTreeStates].sort((a, b) => a - b);
     const treeStatesChanged = JSON.stringify(sortedServerStates) !== JSON.stringify(sortedCurrentStates);
 
-    console.log(`[${new Date().toISOString()}] Sync check for user ${userId}:`);
-    console.log(`  Server: Blinks=${serverBlinkscore}, Trees=${JSON.stringify(serverTreeStates)}`);
-    console.log(`  Client: Blinks=${currentBlinkscore}, Trees=${JSON.stringify(currentTreeStates)}`);
-    console.log(`  Changed: Blinks=${blinkscoreChanged}, Trees=${treeStatesChanged}`);
-
     // Always return the server state when there are changes
     if (blinkscoreChanged || treeStatesChanged) {
       res.status(200).json({
@@ -753,7 +716,6 @@ app.get('/sync/:id', async (req, res) => {
         blinkscore: serverBlinkscore,
         treeStates: serverTreeStates
       });
-      console.log(serverTreeStates);
     }
   } catch (error) {
     console.error('Error syncing user data:', error);

@@ -42,7 +42,6 @@ function exportfunc() {
     }
     )
     .then(data => {
-        console.log('Export data:', data);
         // Display the QR code in the plot section
         const qrCodeImage = document.createElement('img');
         qrCodeImage.src = data.qr_code;
@@ -250,8 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
           return response.json();
         })
         .then(data => {
-          console.log('Imported data:', data);
-      
           // The server wraps the user object in `user`
           const { user } = data;
           const userId = user.id;
@@ -278,8 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Username loaded:', data);
-                    console.log('Raw tree states from loaduserid:', data.treeStates, 'Type:', typeof data.treeStates);
                     username = data.username; // Store the username
                     document.getElementById('username-tooltip').textContent = username;
                     document.getElementById('blink-count').textContent = data.blinkscore || 0; // Set blink score
@@ -293,7 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             loadedTreeStates = JSON.parse(loadedTreeStates);
                         } catch (parseError) {
-                            console.error('Failed to parse tree states on load:', parseError);
                             loadedTreeStates = [];
                         }
                     }
@@ -301,9 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Ensure it's an array
                     if (Array.isArray(loadedTreeStates)) {
                         treeStates = loadedTreeStates;
-                        console.log('Tree states loaded successfully:', treeStates);
                     } else {
-                        console.error('Tree states is not an array on load:', loadedTreeStates);
                         treeStates = [];
                     }
                     
@@ -340,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         return response.json();
                     })
                     .then(data => {
-                        console.log('Username registered:', data);
                         userId = data.id; // Store the userId
                         localStorage.setItem('blinkerUID', userId);
                         tooltip.textContent = newUsername;
@@ -381,7 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
             html5QrCode = new Html5Qrcode("qr-reader");
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
                 /* handle success */
-                console.log(`Code matched = ${decodedText}`, decodedResult);
                 html5QrCode.stop().then(ignore => {
                     // QR Code scanning is stopped.
                     try {
@@ -396,7 +386,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                     return response.json();
                                 })
                                 .then(data => {
-                                    console.log('Imported data:', data);
                                     const { user } = data;
                                     userId = user.id;
                                     localStorage.setItem('blinkerUID', userId);
@@ -461,11 +450,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Update the plots to reflect the current state of trees
 function updatePlots() {
-    console.log('updatePlots called with treeStates:', treeStates, 'Type:', typeof treeStates, 'IsArray:', Array.isArray(treeStates));
-    
     // Ensure treeStates is always an array
     if (!Array.isArray(treeStates)) {
-        console.warn('treeStates is not an array, converting...', treeStates);
         treeStates = [];
     }
     
@@ -477,14 +463,9 @@ function updatePlots() {
         plot.innerHTML = '';
     });
     
-    console.log(`Processing ${treeStates.length} tree states:`, treeStates);
-    
     treeStates.forEach((index, arrayIndex) => {
-        console.log(`Processing tree ${arrayIndex}: index=${index}, type=${typeof index}`);
-        
         const plotIndex = parseInt(index);
         if (isNaN(plotIndex) || plotIndex < 0 || plotIndex >= plots.length) {
-            console.error(`Invalid plot index: ${index} (parsed as ${plotIndex})`);
             return;
         }
         
@@ -494,13 +475,8 @@ function updatePlots() {
             plotElement.innerHTML = '<div class="timer countdown">Planted!</div>';
             plotElement.querySelector('.timer').style.fontSize = '16px';
             plotElement.querySelector('.timer').style.color = 'cyan';
-            console.log(`Successfully updated plot ${plotIndex}`);
-        } else {
-            console.error(`Plot element not found for index ${plotIndex}`);
         }
     });
-    
-    console.log(`updatePlots completed. ${treeStates.length} trees should be visible.`);
 }
 
 
@@ -590,8 +566,6 @@ function startTimer(plot, index) {
             playBeep(1500, 150); // Highest beep at the moment of planting
             plot.classList.add('active');
             
-            console.log(`Planting tree at index ${index}`);
-            
             // Send to server first, then update local state based on server response
             if (userId) {
                 const url = `https://blinkerbuddy-wedergarten.replit.app/blink/${userId}?tree=${index}`;
@@ -605,8 +579,6 @@ function startTimer(plot, index) {
                     return r.json();
                 })
                 .then(data => {
-                    console.log('Tree planted on server:', data);
-                    
                     // Update local state with server response
                     treeStates = data.treeStates || [];
                     document.getElementById('blink-count').textContent = data.blinkscore || 0;
@@ -677,21 +649,10 @@ function startBlinkerAnimation(plot) {
                 const plotIndexForDeath = parseInt(plot.dataset.index);
                 
                 if (!isNaN(plotIndexForDeath)) {
-                    console.log(`Removing tree at plot ${plotIndexForDeath} after 2 hours`);
-                    
                     // Remove from treeStates array
                     const treeToRemoveIndex = treeStates.indexOf(plotIndexForDeath);
                     if (treeToRemoveIndex !== -1) {
                         treeStates.splice(treeToRemoveIndex, 1);
-                        console.log(`Tree at plot ${plotIndexForDeath} removed from treeStates`);
-                        
-                        // Update server if user is logged in
-                        if (userId) {
-                            // Since we don't have a specific "remove tree" endpoint, 
-                            // we'll rely on sync to handle the state difference
-                            console.log('Tree removal will be handled by sync mechanism');
-                        }
-                        
                         updatePlots(); // Update display after removal
                     } else {
                         // If it wasn't found in treeStates, just clear the plot visually
@@ -699,7 +660,6 @@ function startBlinkerAnimation(plot) {
                         plot.innerHTML = '';
                     }
                 } else {
-                    console.error('Could not determine plot index for tree removal');
                     plot.classList.remove('active');
                     plot.innerHTML = '';
                 }
@@ -814,7 +774,6 @@ document.getElementById('reset-button').addEventListener('click', () => {
             return response.json();
         })
         .then(data => {
-            console.log('Trees reset on server:', data);
             treeStates = data.treeStates || [];
             updatePlots();
         })
@@ -829,13 +788,11 @@ document.getElementById('reset-button').addEventListener('click', () => {
         treeStates = [];
         updatePlots();
     }
-    console.log('Trees reset!');
 });
 
 // Sync function to check for updates from server
 function syncWithServer() {
     if (!userId) {
-        console.log('Sync skipped: No user ID');
         return;
     }
 
@@ -843,13 +800,10 @@ function syncWithServer() {
     
     // Ensure treeStates is always an array before syncing
     if (!Array.isArray(treeStates)) {
-        console.warn('treeStates is not an array during sync, resetting to empty array');
         treeStates = [];
     }
     
     const currentTreeStatesParam = encodeURIComponent(JSON.stringify(treeStates));
-    
-    console.log(`Syncing... Current local state: Blinks=${currentBlinkscore}, Trees=${JSON.stringify(treeStates)}`);
     
     fetch(`https://blinkerbuddy-wedergarten.replit.app/sync/${userId}?currentBlinkscore=${currentBlinkscore}&currentTreeStates=${currentTreeStatesParam}`, {
         method: 'GET',
@@ -864,9 +818,6 @@ function syncWithServer() {
         return response.json();
     })
     .then(data => {
-        console.log('Raw sync response:', data);
-        console.log('Server treeStates type:', typeof data.treeStates, 'Value:', data.treeStates);
-        
         // Always update from server data regardless of changed flag
         if (data.blinkscore !== undefined) {
             document.getElementById('blink-count').textContent = data.blinkscore;
@@ -880,27 +831,20 @@ function syncWithServer() {
             if (typeof newTreeStates === 'string') {
                 try {
                     newTreeStates = JSON.parse(newTreeStates);
-                    console.log('Parsed string treeStates:', newTreeStates);
                 } catch (parseError) {
-                    console.error('Failed to parse tree states string:', parseError);
                     newTreeStates = [];
                 }
             }
             
             // Ensure it's an array and update
             if (Array.isArray(newTreeStates)) {
-                console.log(`Updating tree states from server: ${JSON.stringify(newTreeStates)}`);
                 treeStates = newTreeStates;
                 updatePlots();
             } else {
-                console.error('Tree states is not an array after processing:', newTreeStates);
                 treeStates = [];
                 updatePlots();
             }
         }
-        
-        const changeMessage = data.changed ? 'Server data changed' : 'No changes from server';
-        console.log(`${changeMessage}: Blinks=${data.blinkscore}, Trees=${treeStates.length}`);
     })
     .catch(error => {
         console.error('Error syncing with server:', error);
@@ -914,7 +858,6 @@ function startSyncInterval() {
     }
     
     if (userId) {
-        console.log('Starting sync interval...');
         syncInterval = setInterval(syncWithServer, 3000); // Sync every 3 seconds
     }
 }
@@ -924,7 +867,6 @@ function stopSyncInterval() {
     if (syncInterval) {
         clearInterval(syncInterval);
         syncInterval = null;
-        console.log('Sync interval stopped');
     }
 }
 
