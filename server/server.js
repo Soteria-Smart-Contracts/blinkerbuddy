@@ -2,12 +2,21 @@ const express = require('express');
 const crypto = require('crypto');
 const Database = require('@replit/database');
 const QRCode = require('qrcode');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 
 // Initialize Replit Database
 const db = new Database();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 // Middleware - CORS configuration
 app.use(require('cors')({
@@ -23,6 +32,15 @@ app.use(express.urlencoded({ extended: true }));
 function generateHexId() {
   return crypto.randomBytes(16).toString('hex');
 }
+
+// WebSocket connection handling
+io.on('connection', (socket) => {
+  console.log(`[${new Date().toISOString()}] WebSocket client connected: ${socket.id}`);
+  
+  socket.on('disconnect', () => {
+    console.log(`[${new Date().toISOString()}] WebSocket client disconnected: ${socket.id}`);
+  });
+});
 
 // Helper function to remove expired token
 async function removeExpiredToken(exportToken, userId) {
@@ -420,6 +438,21 @@ app.get('/blink/:id', async (req, res) =>{
 
       console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking!`);
 
+      // Broadcast blinker event to all connected WebSocket clients
+      const blinkEvent = {
+        type: 'blinker_taken',
+        timestamp: new Date().toISOString(),
+        user: {
+          id: user.id,
+          username: user.username,
+          blinkscore: user.blinkscore
+        },
+        treeStates: user.treeStates
+      };
+      
+      io.emit('blinker_event', blinkEvent);
+      console.log(`[${new Date().toISOString()}] Broadcasted blinker event for ${user.username}`);
+
       res.status(200).json({
         id: user.id,
         username: user.username,
@@ -596,6 +629,7 @@ app.get('/reset', async (req, res) => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
+  console.log(`WebSocket server ready for connections`);
 });

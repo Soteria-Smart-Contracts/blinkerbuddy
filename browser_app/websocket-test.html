@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blinker WebSocket Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .event { 
+            background: #f0f0f0; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            border-left: 4px solid #007cba;
+        }
+        .timestamp { color: #666; font-size: 0.9em; }
+        #status { 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin-bottom: 20px;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Blinker WebSocket Live Feed</h1>
+    <div id="status" class="disconnected">Disconnected</div>
+    <div id="events"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io('https://blinkerbuddy-wedergarten.replit.app');
+        const statusDiv = document.getElementById('status');
+        const eventsDiv = document.getElementById('events');
+
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket server');
+            statusDiv.textContent = 'Connected to live feed';
+            statusDiv.className = 'connected';
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server');
+            statusDiv.textContent = 'Disconnected from live feed';
+            statusDiv.className = 'disconnected';
+        });
+
+        socket.on('blinker_event', (data) => {
+            console.log('Blinker event received:', data);
+            
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'event';
+            eventDiv.innerHTML = `
+                <strong>🌳 ${data.user.username} planted a tree!</strong><br>
+                <span class="timestamp">Score: ${data.user.blinkscore} | ${new Date(data.timestamp).toLocaleString()}</span><br>
+                Trees planted: ${data.treeStates.length}
+            `;
+            
+            eventsDiv.insertBefore(eventDiv, eventsDiv.firstChild);
+            
+            // Keep only the last 50 events
+            while (eventsDiv.children.length > 50) {
+                eventsDiv.removeChild(eventsDiv.lastChild);
+            }
+        });
+    </script>
+</body>
+</html>

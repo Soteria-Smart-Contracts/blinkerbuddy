@@ -1,6 +1,5 @@
 const plots = document.querySelectorAll('.plot');
 let treeStates = [];
-let totalBlinkersToday = 0;
 let highScore = 0;
 let isBlinking = false;
 let plantedTreesCount = 0;
@@ -24,6 +23,59 @@ document.addEventListener('visibilitychange', () => {
         getAudioContext();
     }
 });
+
+//create function exportfunc() which is set to an aonlick to export the button, to hit the api which is already found and call /export/:username, which will return { "username": "dtz", "id": "7f09fadef4423da0801d930ab7ba7424", "token": "5c7578e007ec776bf4449e0911eccd27", "expires_in": 180, "import_url": "https://blinke.netlify.app/import:5c7578e007ec776bf4449e0911eccd27", "qr_code": "data:image/png;base64,iV...etc"}
+//you need to display the qr code in the plot section for 45 seconds, and then remove and return evything to normal
+function exportfunc() {
+    const username = document.getElementById('username-tooltip').textContent;
+    if (!username) {
+        alert('Please enter a username first!');
+        return;
+    }
+    fetch(`https://blinkerbuddy-wedergarten.replit.app/export/${encodeURIComponent(username)}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    }
+    )
+    .then(data => {
+        console.log('Export data:', data);
+        // Display the QR code in the plot section
+        const qrCodeImage = document.createElement('img');
+        qrCodeImage.src = data.qr_code;
+        qrCodeImage.style.width = '200px'; // Set a reasonable size for the QR code
+        qrCodeImage.style.height = 'auto';
+        qrCodeImage.style.margin = '10px auto';
+        qrCodeImage.alt = 'QR Code for Blink Buddy Export';
+
+        // over lay it in the entire plot section and then remove it after 45 seconds, simple as that
+        const plotOverlay = document.createElement('div');
+        plotOverlay.style.position = 'absolute';
+        plotOverlay.style.top = '0';
+        plotOverlay.style.left = '0';
+        plotOverlay.style.width = '100%';
+        plotOverlay.style.height = '100%';
+        plotOverlay.style.display = 'flex';
+        plotOverlay.style.justifyContent = 'center';
+        plotOverlay.style.alignItems = 'center';
+        plotOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        plotOverlay.style.zIndex = '1000';
+
+        plotOverlay.appendChild(qrCodeImage);
+        document.body.appendChild(plotOverlay);
+
+        setTimeout(() => {
+            document.body.removeChild(plotOverlay);
+        }, 10000); // Remove the overlay after 45 seconds
+    }
+    )
+    .catch(error => {
+        console.error('Error exporting data:', error);
+        alert('Error exporting data. Please try again later.');
+    });
+}
 
 function playBeep(frequency = 523.25, duration = 100, volume = 0.3) {
     const context = getAudioContext();
@@ -181,91 +233,199 @@ function stopSirenSound() {
 }
 
 // Load saved states from storage
-treeStates = JSON.parse(localStorage.getItem('treeStates')) || [];
-totalBlinkersToday = parseInt(localStorage.getItem('totalBlinkersToday')) || 0;
-highScore = parseInt(localStorage.getItem('highScore')) || 0;
-updatePlots();
-updateBlinkStats();
-checknewday(); // Check if it's a new day to reset blink count
+treeStates = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-   //the sotrage is checked for an id at the start of the script, so we can use that instead, and then call /loadusername:id to fetch the username of the user
-   //if the id is not empty, prompt to enter username, oth
-   let username;
-   if( userId !== '') {
-        fetch(`https://blinkerbuddy-wedergarten.replit.app/loadusername:${userId}`)
+    const urlParams = new URLSearchParams(window.location.search);
+    const importId = urlParams.get('id'); // Check if there's an 'id' parameter in the URL
+
+    if (importId) {
+        // If there's an 'id' parameter, import the data
+        fetch(`https://blinkerbuddy-wedergarten.replit.app/import/${importId}`)
         .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.text();
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
         })
         .then(data => {
-            console.log('Username loaded:', data);
-            //the data comes out as { "id": "2307faa68da8836ec6264427e06d963b", "username": "john123", "blinkscore": 42 }, extract the username and blinkscore
-            const responseData = JSON.parse(data);
-            username = responseData.username; // Store the username
-            document.getElementById('username-tooltip').textContent = username;
-            document.getElementById('blink-score').textContent = responseData.blinkscore || 0; // Set blink score, default to 0 if not present
-            document.getElementById('username-modal').style.display = 'none'; // Hide the modal if username is loaded
-
+          console.log('Imported data:', data);
+      
+          // The server wraps the user object in `user`
+          const { user } = data;
+          const userId = user.id;
+      
+          localStorage.setItem('blinkerUID', userId);
+          document.getElementById('username-tooltip').textContent = user.username;
+          document.getElementById('blink-count').textContent = user.blinkscore || 0;
+          document.getElementById('username-modal').style.display = 'none'; // Hide the modal
         })
         .catch(error => {
-            console.error('Error loading username:', error);
-            alert('Error loading username. Please try again later.');
+          console.error('Error importing data:', error);
+          alert('Error importing data. Please try again later.');
+        });
+    } else {
+        // If no 'id' parameter, proceed with the normal flow
+        let username;
+        if (userId !== '') {
+            fetch(`https://blinkerbuddy-wedergarten.replit.app/loaduserid/${userId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Username loaded:', data);
+                    username = data.username; // Store the username
+                    document.getElementById('username-tooltip').textContent = username;
+                    document.getElementById('blink-count').textContent = data.blinkscore || 0; // Set blink score
+                    document.getElementById('username-modal').style.display = 'none'; // Hide the modal
+                    //it now also returns treeStates, so we can load them       treeState: userData.treeState || []
+                    //the treestate is a string which needs to be parsed into an array, one liner, i know its a string already
+                    treeStates = (data.treeStates); // Assign to global treeStates
+                    //parse the treeStates if it's a string in one line
+                    treeStates = JSON.parse(treeStates);
+                    console.log('Tree states loaded:', treeStates);
+                    updatePlots(); // Update the plots with loaded tree states
+
+                })
+                .catch(error => {
+                    console.error('Error loading username:', error);
+                    document.getElementById('username-modal').style.display = 'flex'; // Show the modal
+                    username = ''; // Reset username if loading fails
+                    document.getElementById('username-tooltip').textContent = ''; // Clear tooltip
+                });
+        }
+
+        const blinkStats = document.getElementById('blink-stats');
+        const tooltip = document.getElementById('username-tooltip');
+
+        if (userId !== '') {
+            tooltip.textContent = username;
+        } else {
+            document.getElementById('username-modal').style.display = 'flex';
+        }
+
+        document.getElementById('username-submit').addEventListener('click', () => {
+            const usernameInput = document.getElementById('username-input');
+            const newUsername = usernameInput.value.trim();
+            if (newUsername) {
+                fetch(`https://blinkerbuddy-wedergarten.replit.app/register/${encodeURIComponent(newUsername)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Username registered:', data);
+                        userId = data.id; // Store the userId
+                        localStorage.setItem('blinkerUID', userId);
+                        tooltip.textContent = newUsername;
+                    })
+                    .catch(error => {
+                        console.error('Error registering username:', error);
+                        alert('Error registering username. Please try again later.');
+                    });
+                tooltip.textContent = newUsername;
+                document.getElementById('username-modal').style.display = 'none';
+            }
+        });
+
+        blinkStats.addEventListener('mouseover', () => {
+            if (tooltip.textContent) {
+                tooltip.style.visibility = 'visible';
+                tooltip.style.opacity = '1';
+            }
+        });
+
+        blinkStats.addEventListener('mouseout', () => {
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.opacity = '0';
+        });
+
+        const importAccountButton = document.getElementById('import-account-button');
+        const qrScannerContainer = document.getElementById('qr-scanner-container');
+        const qrScannerCancel = document.getElementById('qr-scanner-cancel');
+        const usernameModal = document.getElementById('username-modal');
+
+        let html5QrCode;
+
+        importAccountButton.addEventListener('click', () => {
+            usernameModal.style.display = 'none';
+            qrScannerContainer.style.display = 'block';
+
+            html5QrCode = new Html5Qrcode("qr-reader");
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                /* handle success */
+                console.log(`Code matched = ${decodedText}`, decodedResult);
+                html5QrCode.stop().then(ignore => {
+                    // QR Code scanning is stopped.
+                    try {
+                        const url = new URL(decodedText);
+                        const importId = url.searchParams.get('id');
+                        if (importId) {
+                            fetch(`https://blinkerbuddy-wedergarten.replit.app/import/${importId}`)
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Network response was not ok');
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    console.log('Imported data:', data);
+                                    const { user } = data;
+                                    userId = user.id;
+                                    localStorage.setItem('blinkerUID', userId);
+                                    document.getElementById('username-tooltip').textContent = user.username;
+                                    document.getElementById('blink-count').textContent = user.blinkscore || 0;
+                                    usernameModal.style.display = 'none';
+                                    qrScannerContainer.style.display = 'none';
+                                    // You might want to load the user's tree states here as well
+                                })
+                                .catch(error => {
+                                    console.error('Error importing data:', error);
+                                    alert('Error importing data. Please try again later.');
+                                    qrScannerContainer.style.display = 'none';
+                                    usernameModal.style.display = 'flex';
+                                });
+                        } else {
+                            throw new Error("No id found in QR code");
+                        }
+                    } catch (e) {
+                        console.error("Error processing QR code:", e);
+                        alert("Invalid QR code.");
+                        qrScannerContainer.style.display = 'none';
+                        usernameModal.style.display = 'flex';
+                    }
+                }).catch(err => {
+                    // Stop failed, handle it.
+                    console.log("Failed to stop QR code scanner.", err);
+                });
+            };
+
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            // If you want to prefer back camera
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+        });
+
+        qrScannerCancel.addEventListener('click', () => {
+            if (html5QrCode) {
+                html5QrCode.stop().then(ignore => {
+                    qrScannerContainer.style.display = 'none';
+                    usernameModal.style.display = 'flex';
+                }).catch(err => {
+                    console.log("Failed to stop QR code scanner.", err);
+                });
+            }
         });
     }
-    const blinkStats = document.getElementById('blink-stats');
-    const tooltip = document.getElementById('username-tooltip');
-
-    if (userId !== '') {
-        tooltip.textContent = username;
-    } else {
-        document.getElementById('username-modal').style.display = 'flex';
-    }
-    //will this work as expected?
-    //answer: yes, it will work as expected, but we need to fetch the username from the server first, which we al
-
-    document.getElementById('username-submit').addEventListener('click', () => {
-        const usernameInput = document.getElementById('username-input');
-        const newUsername = usernameInput.value.trim();
-        if (newUsername) {
-            //register the new name by sending a get request to the server https://blinkerbuddy-wedergarten.replit.app/register/username
-            fetch(`https://blinkerbuddy-wedergarten.replit.app/register/${encodeURIComponent(newUsername)}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.text();
-            })
-            .then(data => {
-                console.log('Username registered:', data);
-                //it will return a json containing the userId like so: {"username":"john123","id":"2307faa68da8836ec6264427e06d963b"}
-                const responseData = JSON.parse(data);
-                userId = responseData.id; // Store the userId
-                localStorage.setItem('blinkerUID', userId);
-                tooltip.textContent = newUsername;
-            }).catch(error => {
-                console.error('Error registering username:', error);
-                alert('Error registering username. Please try again later.');
-            });
-            tooltip.textContent = newUsername;
-            document.getElementById('username-modal').style.display = 'none';
-        }
-    });
-
-    blinkStats.addEventListener('mouseover', () => {
-        if (tooltip.textContent) {
-            tooltip.style.visibility = 'visible';
-            tooltip.style.opacity = '1';
-        }
-    });
-
-    blinkStats.addEventListener('mouseout', () => {
-        tooltip.style.visibility = 'hidden';
-        tooltip.style.opacity = '0';
-    });
 });
+
+//now if I go to the website with a id as query parameter, it will import the data from the server, like blinker.netlify.app/?id=5c7578e007ec776bf4449e0911eccd27
+//will this work with param right after the slash? like blinker.netlify.app/?id=5c7578e007ec776bf4449e0911eccd27
 
 //fix the following console command for testing purposes
 //chrome.storage.local.get([highScore])
@@ -278,6 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Update the plots to reflect the current state of trees
 function updatePlots() {
+    console.log(treeStates);
     plantedTreesCount = 0; // Reset plantedTreesCount
     // Clear all plots
     plots.forEach(plot => {
@@ -292,15 +453,8 @@ function updatePlots() {
         plotElement.querySelector('.timer').style.color = 'cyan';
 
     });
-    updateBlinkStats();
-}
 
-// Update the blink stats display
-function updateBlinkStats() {
-    document.getElementById('blink-count').textContent = totalBlinkersToday;
-    document.getElementById('high-score').textContent = highScore;
 }
-
 
 
 // Start the countdown overlay
@@ -389,17 +543,31 @@ function startTimer(plot, index) {
             playBeep(1500, 150); // Highest beep at the moment of planting
             plot.classList.add('active');
             treeStates.push(index);
-            totalBlinkersToday++;
-            if (totalBlinkersToday > highScore) {
-                highScore = totalBlinkersToday;
-            }
+            const blinkCountElement = document.getElementById('blink-count');
+            const currentCount = parseInt(blinkCountElement.textContent) || 0;
+            blinkCountElement.textContent = currentCount + 1;
             localStorage.setItem('treeStates', JSON.stringify(treeStates));
-            localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
-            localStorage.setItem('highScore', highScore);
             console.log('Tree planted!');
             timerElement.textContent = 'Planted!';
             timerElement.style.fontSize = '16px';
             startBlinkerAnimation(plot);
+            //send an api request to the server to update the blink count for the user by doing /blink/:id
+            if (userId) {
+                const url =
+                `https://blinkerbuddy-wedergarten.replit.app/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
+              
+              fetch(url, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+              })
+                .then(r => {
+                  if (!r.ok) throw new Error('Network response was not ok');
+                  return r.json();
+                })
+                .then(data => console.log('Blink count updated:', data))
+                .catch(err => console.error('Error updating blink count:', err));
+              
+            }
         }
     }, 100);
 }
@@ -424,7 +592,6 @@ function startBlinkerAnimation(plot) {
             stopSirenSound(); // Stop the siren explicitly
             overlay.style.display = 'none';
             isBlinking = false;
-            updateBlinkStats();
             checkAllTreesFilled();
             // The following setTimeout seems to be for tree death, not directly related to plot argument.
             // If 'index' is needed here, it must be passed to startBlinkerAnimation.
@@ -533,24 +700,23 @@ function getRandomGnomeMessage() {
     return messages[Math.floor(Math.random() * messages.length)];
 }
 
-// Reset daily blink count at midnight
-function checknewday() {
-    //see if the current date is different from the last saved date, if there is no saved date, or if the last saved date is more than 24 hours ago
-    // then reset the daily blink count
-    const now = new Date();
-    const lastResetDate = localStorage.getItem('lastResetDate');
-    if (!lastResetDate || new Date(lastResetDate).toDateString() !== now.toDateString()) {
-        totalBlinkersToday = 0;
-        localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
-        localStorage.setItem('lastResetDate', now.toISOString());
-        console.log('Daily blink count reset!');
-        updateBlinkStats();
-    }
-    else {
-        console.log('Daily blink count already reset for today.');
-    }
-    updateBlinkStats();
-}
+// // Reset daily blink count at midnight
+// function checknewday() {
+//     //see if the current date is different from the last saved date, if there is no saved date, or if the last saved date is more than 24 hours ago
+//     // then reset the daily blink count
+//     const now = new Date();
+//     const lastResetDate = localStorage.getItem('lastResetDate');
+//     if (!lastResetDate || new Date(lastResetDate).toDateString() !== now.toDateString()) {
+//         totalBlinkersToday = 0;
+//         localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
+//         localStorage.setItem('lastResetDate', now.toISOString());
+//         console.log('Daily blink count reset!');
+//     }
+//     else {
+//         console.log('Daily blink count already reset for today.');
+//     }
+//     updateBlinkStats();
+// }
 
 // Event listeners for plots
 plots.forEach((plot, index) => {
@@ -570,19 +736,19 @@ document.getElementById('reset-button').addEventListener('click', () => {
     updatePlots();
 });
 
-// Event listener for reducing daily blinker count
-document.getElementById('blink-count').addEventListener('click', () => {
-    if (totalBlinkersToday > 0) {
-        totalBlinkersToday--;
-        if (totalBlinkersToday > highScore) {
-            highScore = totalBlinkersToday;
-        }
-        localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
-        localStorage.setItem('highScore', highScore);
-        console.log('Daily blink count reduced!');
-        updateBlinkStats();
-    }
-});
+// // Event listener for reducing daily blinker count
+// document.getElementById('blink-count').addEventListener('click', () => {
+//     if (totalBlinkersToday > 0) {
+//         totalBlinkersToday--;
+//         if (totalBlinkersToday > highScore) {
+//             highScore = totalBlinkersToday;
+//         }
+//         localStorage.setItem('totalBlinkersToday', totalBlinkersToday);
+//         localStorage.setItem('highScore', highScore);
+//         console.log('Daily blink count reduced!');
+//         updateBlinkStats();
+//     }
+// });
 
 // localStorage.removeItem('bbUsername');
 //conver this to browser extension eqivalent
