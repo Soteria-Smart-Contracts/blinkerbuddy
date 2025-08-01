@@ -15,7 +15,8 @@ const io = new Server(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
-  }
+  },
+  allowEIO3: true
 });
 
 // Middleware - CORS configuration
@@ -27,6 +28,12 @@ app.use(require('cors')({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve Socket.IO client files
+app.get('/socket.io/*', (req, res, next) => {
+  // Let Socket.IO handle its own routes
+  next();
+});
 
 // Helper function to generate 32-bit hexadecimal ID
 function generateHexId() {
