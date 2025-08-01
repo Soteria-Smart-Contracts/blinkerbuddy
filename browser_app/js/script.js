@@ -32,7 +32,7 @@ function exportfunc() {
         alert('Please enter a username first!');
         return;
     }
-    fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/export/${encodeURIComponent(username)}`)
+    fetch(`https://blinkerbuddy-wedergarten.replit.app/export/${encodeURIComponent(username)}`)
     .then(response => {
         if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -235,40 +235,69 @@ function stopSirenSound() {
 // Load saved states from storage
 treeStates = [];
 
+function importUserData(importId) {
+    fetch(`https://blinkerbuddy-wedergarten.replit.app/import/${importId}`)
+    .then(response => {
+        if (!response.ok) {
+        throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Imported data:', data);
+
+        // The server wraps the user object in `user`
+        const { user } = data;
+        const userId = user.id;
+
+        localStorage.setItem('blinkerUID', userId);
+        document.getElementById('username-tooltip').textContent = user.username;
+        document.getElementById('blink-count').textContent = user.blinkscore || 0;
+        document.getElementById('username-modal').style.display = 'none'; // Hide the modal
+    })
+    .catch(error => {
+        console.error('Error importing data:', error);
+        alert('Error importing data. Please try again later.');
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    const importAccountButton = document.getElementById('import-account-button');
+    const qrReaderDiv = document.getElementById('qr-reader');
+    const usernameModal = document.getElementById('username-modal');
+
+    importAccountButton.addEventListener('click', () => {
+        usernameModal.style.display = 'none';
+        qrReaderDiv.style.display = 'block';
+
+        const html5QrCode = new Html5Qrcode("qr-reader");
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            html5QrCode.stop().then(() => {
+                qrReaderDiv.style.display = 'none';
+                const url = new URL(decodedText);
+                const importId = url.searchParams.get('id');
+                if (importId) {
+                    importUserData(importId);
+                } else {
+                    alert('Invalid QR code');
+                }
+            });
+        };
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+    });
+
     const urlParams = new URLSearchParams(window.location.search);
     const importId = urlParams.get('id'); // Check if there's an 'id' parameter in the URL
 
     if (importId) {
-        // If there's an 'id' parameter, import the data
-        fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/import/${importId}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Imported data:', data);
-      
-          // The server wraps the user object in `user`
-          const { user } = data;
-          const userId = user.id;
-      
-          localStorage.setItem('blinkerUID', userId);
-          document.getElementById('username-tooltip').textContent = user.username;
-          document.getElementById('blink-count').textContent = user.blinkscore || 0;
-          document.getElementById('username-modal').style.display = 'none'; // Hide the modal
-        })
-        .catch(error => {
-          console.error('Error importing data:', error);
-          alert('Error importing data. Please try again later.');
-        });
+        importUserData(importId);
     } else {
         // If no 'id' parameter, proceed with the normal flow
         let username;
         if (userId !== '') {
-            fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/loaduserid/${userId}`)
+            fetch(`https://blinkerbuddy-wedergarten.replit.app/loaduserid/${userId}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -311,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const usernameInput = document.getElementById('username-input');
             const newUsername = usernameInput.value.trim();
             if (newUsername) {
-                fetch(`https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/register/${encodeURIComponent(newUsername)}`)
+                fetch(`https://blinkerbuddy-wedergarten.replit.app/register/${encodeURIComponent(newUsername)}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
@@ -477,7 +506,7 @@ function startTimer(plot, index) {
             //send an api request to the server to update the blink count for the user by doing /blink/:id
             if (userId) {
                 const url =
-                `https://53bf133f-9ce8-48c9-9329-2d922f5526cb-00-3rcwbh55ls7s5.worf.replit.dev:5000/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
+                `https://blinkerbuddy-wedergarten.replit.app/blink/${userId}?treeStates=${encodeURIComponent(JSON.stringify(treeStates))}`;
               
               fetch(url, {
                 method: 'GET',
