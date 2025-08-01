@@ -553,6 +553,55 @@ app.get('/importcheck/:token', async (req, res) => {
   }
 });
 
+// Sync endpoint: /sync/:id
+app.post('/sync/:id', async (req, res) => {
+  const userId = req.params.id;
+  const { currentBlinkscore, currentTreeStates } = req.body;
+
+  if (!userId || userId.trim() === '') {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    const userResult = await db.get(`user:${userId}`);
+    let user = null;
+    if (userResult && userResult.ok && userResult.value) {
+      user = userResult.value;
+    } else if (userResult && userResult.id) {
+      user = userResult;
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const serverBlinkscore = user.blinkscore || 0;
+    const serverTreeStates = user.treeStates || [];
+
+    // Check if there are any differences
+    const blinkscoreChanged = serverBlinkscore !== currentBlinkscore;
+    const treeStatesChanged = JSON.stringify(serverTreeStates) !== JSON.stringify(currentTreeStates);
+
+    if (blinkscoreChanged || treeStatesChanged) {
+      // Return updated data
+      res.status(200).json({
+        changed: true,
+        blinkscore: serverBlinkscore,
+        treeStates: serverTreeStates,
+        username: user.username
+      });
+    } else {
+      // No changes
+      res.status(200).json({
+        changed: false
+      });
+    }
+  } catch (error) {
+    console.error('Error syncing user data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 
 // Reset endpoint: /reset (for development purposes)

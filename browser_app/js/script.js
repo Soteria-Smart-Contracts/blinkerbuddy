@@ -4,6 +4,7 @@ let highScore = 0;
 let isBlinking = false;
 let plantedTreesCount = 0;
 let userId = localStorage.getItem('blinkerUID') || '';
+let syncInterval = null;
 
 // Web Audio API setup
 let audioCtx = null;
@@ -259,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('username-tooltip').textContent = user.username;
           document.getElementById('blink-count').textContent = user.blinkscore || 0;
           document.getElementById('username-modal').style.display = 'none'; // Hide the modal
+          startSyncInterval(); // Start syncing with server
         })
         .catch(error => {
           console.error('Error importing data:', error);
@@ -288,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     treeStates = JSON.parse(treeStates);
                     console.log('Tree states loaded:', treeStates);
                     updatePlots(); // Update the plots with loaded tree states
+                    startSyncInterval(); // Start syncing with server
 
                 })
                 .catch(error => {
@@ -323,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         userId = data.id; // Store the userId
                         localStorage.setItem('blinkerUID', userId);
                         tooltip.textContent = newUsername;
+                        startSyncInterval(); // Start syncing with server
                     })
                     .catch(error => {
                         console.error('Error registering username:', error);
@@ -382,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     document.getElementById('blink-count').textContent = user.blinkscore || 0;
                                     usernameModal.style.display = 'none';
                                     qrScannerContainer.style.display = 'none';
+                                    startSyncInterval(); // Start syncing with server
                                     // You might want to load the user's tree states here as well
                                 })
                                 .catch(error => {
@@ -736,6 +741,70 @@ document.getElementById('reset-button').addEventListener('click', () => {
     console.log('Trees reset!');
     updatePlots();
 });
+
+// Sync function to check for updates from server
+function syncWithServer() {
+    if (!userId) return;
+
+    const currentBlinkscore = parseInt(document.getElementById('blink-count').textContent) || 0;
+    
+    fetch(`https://blinkerbuddy-wedergarten.replit.app/sync/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            currentBlinkscore: currentBlinkscore,
+            currentTreeStates: treeStates
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.changed) {
+            console.log('Server data changed, updating local state...');
+            
+            // Update blink count
+            document.getElementById('blink-count').textContent = data.blinkscore;
+            
+            // Update tree states
+            treeStates = data.treeStates || [];
+            
+            // Update the display
+            updatePlots();
+            
+            console.log(`Synced: Blinks: ${data.blinkscore}, Trees: ${treeStates.length}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error syncing with server:', error);
+    });
+}
+
+// Start sync interval when user is logged in
+function startSyncInterval() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+    }
+    
+    if (userId) {
+        console.log('Starting sync interval...');
+        syncInterval = setInterval(syncWithServer, 3000); // Sync every 3 seconds
+    }
+}
+
+// Stop sync interval
+function stopSyncInterval() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+        console.log('Sync interval stopped');
+    }
+}
 
 // // Event listener for reducing daily blinker count
 // document.getElementById('blink-count').addEventListener('click', () => {
