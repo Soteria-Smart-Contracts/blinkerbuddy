@@ -2,22 +2,12 @@ const express = require('express');
 const crypto = require('crypto');
 const Database = require('@replit/database');
 const QRCode = require('qrcode');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
 
 // Initialize Replit Database
 const db = new Database();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  },
-  allowEIO3: true
-});
 
 // Middleware - CORS configuration
 app.use(require('cors')({
@@ -29,25 +19,10 @@ app.use(require('cors')({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve Socket.IO client files
-app.get('/socket.io/*', (req, res, next) => {
-  // Let Socket.IO handle its own routes
-  next();
-});
-
 // Helper function to generate 32-bit hexadecimal ID
 function generateHexId() {
   return crypto.randomBytes(16).toString('hex');
 }
-
-// WebSocket connection handling
-io.on('connection', (socket) => {
-  console.log(`[${new Date().toISOString()}] WebSocket client connected: ${socket.id}`);
-  
-  socket.on('disconnect', () => {
-    console.log(`[${new Date().toISOString()}] WebSocket client disconnected: ${socket.id}`);
-  });
-});
 
 // Helper function to remove expired token
 async function removeExpiredToken(exportToken, userId) {
@@ -68,8 +43,6 @@ async function removeExpiredToken(exportToken, userId) {
       user.exportToken = null;
       await db.set(`user:${userId}`, user);
     }
-
-    console.log(`[${new Date().toISOString()}] Export token expired and removed: ${exportToken.substring(0, 8)}...`);
   } catch (error) {
     console.error('Error removing expired token:', error);
   }
@@ -93,9 +66,6 @@ app.get('/register/:username', async (req, res) => {
     const usersListResult = await db.list('user:');
     const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
 
-    console.log(`[${new Date().toISOString()}] Checking for duplicate username: ${username}`);
-    console.log(`[${new Date().toISOString()}] Found ${usersList.length} existing users`);
-
     for (const key of usersList) {
       const userResult = await db.get(key);
       // Handle both direct user object and wrapped response
@@ -106,10 +76,7 @@ app.get('/register/:username', async (req, res) => {
         userData = userResult;
       }
 
-      console.log(`[${new Date().toISOString()}] Checking user ${key}: ${userData ? userData.username : 'no data'}`);
-
       if (userData && userData.username && userData.username.toLowerCase() === username.toLowerCase()) {
-        console.log(`[${new Date().toISOString()}] Username '${username}' already exists!`);
         return res.status(409).json({ error: 'Username already exists' });
       }
     }
@@ -124,7 +91,6 @@ app.get('/register/:username', async (req, res) => {
     };
 
     await db.set(`user:${userId}`, newUser);
-    console.log(`[${new Date().toISOString()}] User registered:`, { id: userId, username: username });
 
     res.status(200).json({
       id: userId,
@@ -188,7 +154,6 @@ app.get('/export/:username', async (req, res) => {
     };
 
     await db.set(`activeExport:${exportToken}`, activeExportData);
-    console.log(`[${new Date().toISOString()}] Stored active export:`, activeExportData);
 
     // Set individual timeout to clear token after exactly 3 minutes
     setTimeout(() => {
@@ -309,11 +274,8 @@ app.get('/all', async (req, res) => {
     const usersListResult = await db.list('user:');
     const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
 
-    console.log(`[${new Date().toISOString()}] Found ${usersList.length} user keys in /all`);
-
     for (const key of usersList) {
       const userResult = await db.get(key);
-      console.log(`[${new Date().toISOString()}] Retrieved data for key ${key}:`, userResult);
 
       // Handle both direct user object and wrapped response
       let user = null;
@@ -329,12 +291,8 @@ app.get('/all', async (req, res) => {
           username: user.username,
           blinkscore: user.blinkscore || 0
         });
-      } else {
-        console.log(`[${new Date().toISOString()}] Invalid user data for key ${key}:`, user);
       }
     }
-
-    console.log(`[${new Date().toISOString()}] Final users array:`, allUsers);
 
     const responseData = {
       users: allUsers,
@@ -369,7 +327,6 @@ app.get('/activeexports', async (req, res) => {
 
     for (const key of exportsList) {
       const exportResult = await db.get(key);
-      console.log(`[${new Date().toISOString()}] Retrieved export data for key ${key}:`, exportResult);
 
       // Handle both direct export object and wrapped response
       let exportData = null;
@@ -393,11 +350,7 @@ app.get('/activeexports', async (req, res) => {
             expiresAt: new Date(expiresAt).toISOString(),
             timeRemaining: Math.max(0, Math.ceil((expiresAt - now) / 1000)) // seconds remaining
           });
-        } else {
-          console.log(`[${new Date().toISOString()}] Skipping export with invalid timestamps:`, exportData);
         }
-      } else {
-        console.log(`[${new Date().toISOString()}] No valid export data found for key ${key}:`, exportData);
       }
     }
 
@@ -415,9 +368,7 @@ app.get('/activeexports', async (req, res) => {
 //add a new endpoint called /blink/:id, where if called increments the blinkscore of the user with the given id by 1
 app.get('/blink/:id', async (req, res) =>{
     const userId = req.params.id;
-    const treeStates = req.query.treeStates; // Getting the treeState array from query parameters
-
-  console.log(treeStates)
+    const treeIndex = req.query.tree; // Getting the specific tree index being planted
 
     if (!userId || userId.trim() === '') {
       return res.status(400).json({ error: 'User ID is required' });
@@ -437,28 +388,35 @@ app.get('/blink/:id', async (req, res) =>{
       }
 
       user.blinkscore = (user.blinkscore || 0) + 1;
-      user.treeStates = treeStates || []; // Adding treeState to the user data
+      
+      // Parse existing treeStates properly
+      let currentTreeStates = [];
+      if (user.treeStates) {
+        if (typeof user.treeStates === 'string') {
+          try {
+            currentTreeStates = JSON.parse(user.treeStates);
+          } catch (parseError) {
+            currentTreeStates = [];
+          }
+        } else if (Array.isArray(user.treeStates)) {
+          currentTreeStates = user.treeStates;
+        }
+      }
+      
+      // Add the new tree if provided and not already planted
+      if (treeIndex !== undefined && treeIndex !== null) {
+        const treeIndexNum = parseInt(treeIndex);
+        if (!isNaN(treeIndexNum) && !currentTreeStates.includes(treeIndexNum)) {
+          currentTreeStates.push(treeIndexNum);
+        }
+      }
+      
+      // Store as array (not string)
+      user.treeStates = currentTreeStates;
 
       await db.set(`user:${userId}`, user);
 
-      console.log(`[${new Date().toISOString()}] Blinkscore incremented for user ${userId}`);
-
       console.log(`[${new Date().toISOString()}] ${user.username} has been caught blinking!`);
-
-      // Broadcast blinker event to all connected WebSocket clients
-      const blinkEvent = {
-        type: 'blinker_taken',
-        timestamp: new Date().toISOString(),
-        user: {
-          id: user.id,
-          username: user.username,
-          blinkscore: user.blinkscore
-        },
-        treeStates: user.treeStates
-      };
-      
-      io.emit('blinker_event', blinkEvent);
-      console.log(`[${new Date().toISOString()}] Broadcasted blinker event for ${user.username}`);
 
       res.status(200).json({
         id: user.id,
@@ -471,6 +429,44 @@ app.get('/blink/:id', async (req, res) =>{
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+// Reset trees endpoint: /resettrees/:id
+app.get('/resettrees/:id', async (req, res) => {
+  const userId = req.params.id;
+  if (!userId || userId.trim() === '') {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    // Find user by user ID
+    const userResult = await db.get(`user:${userId}`);
+    let userData = null;
+    if (userResult && userResult.ok && userResult.value) {
+      userData = userResult.value;
+    } else if (userResult && userResult.id) {
+      userData = userResult;
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Reset tree states to empty array
+    userData.treeStates = [];
+    await db.set(`user:${userId}`, userData);
+    
+    // Return updated user data
+    res.status(200).json({
+      id: userData.id,
+      username: userData.username,
+      blinkscore: userData.blinkscore || 0,
+      treeStates: userData.treeStates
+    });
+  } catch (error) {
+    console.error('Error resetting trees:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Load user ID endpoint: /loaduserid/:id
 app.get('/loaduserid/:id', async (req, res) => {
@@ -495,12 +491,27 @@ app.get('/loaduserid/:id', async (req, res) => {
     }
 
     console.log(`[${new Date().toISOString()}] User ${userData.username} logging in...`)
+    
+    // Parse treeStates properly
+    let parsedTreeStates = [];
+    if (userData.treeStates) {
+      if (typeof userData.treeStates === 'string') {
+        try {
+          parsedTreeStates = JSON.parse(userData.treeStates);
+        } catch (parseError) {
+          parsedTreeStates = [];
+        }
+      } else if (Array.isArray(userData.treeStates)) {
+        parsedTreeStates = userData.treeStates;
+      }
+    }
+    
     // Return user data, including treeState
     res.status(200).json({
       id: userData.id,
       username: userData.username,
       blinkscore: userData.blinkscore || 0,
-      treeStates: userData.treeStates || []
+      treeStates: parsedTreeStates
     });
   } catch (error) {
     console.error('Error loading user:', error);
@@ -553,7 +564,51 @@ app.get('/importcheck/:token', async (req, res) => {
   }
 });
 
+// Clear exports endpoint: /clearexports
+app.get('/clearexports', async (req, res) => {
+  try {
+    // Clear all active exports
+    const exportsListResult = await db.list('activeExport:');
+    const exportsList = (exportsListResult && exportsListResult.ok && exportsListResult.value) ? exportsListResult.value : [];
 
+    let deletedCount = 0;
+    for (const key of exportsList) {
+      await db.delete(key);
+      deletedCount++;
+    }
+
+    // Clear export tokens from all users
+    const usersListResult = await db.list('user:');
+    const usersList = (usersListResult && usersListResult.ok && usersListResult.value) ? usersListResult.value : [];
+
+    let usersUpdated = 0;
+    for (const key of usersList) {
+      const userResult = await db.get(key);
+      let user = null;
+      if (userResult && userResult.ok && userResult.value) {
+        user = userResult.value;
+      } else if (userResult && userResult.id) {
+        user = userResult;
+      }
+
+      if (user && user.exportToken) {
+        user.exportToken = null;
+        await db.set(key, user);
+        usersUpdated++;
+      }
+    }
+
+    res.status(200).json({
+      message: 'All active exports have been cleared',
+      deleted_exports: deletedCount,
+      users_updated: usersUpdated,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error clearing exports:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Reset endpoint: /reset (for development purposes)
 app.get('/reset', async (req, res) => {
@@ -589,8 +644,88 @@ app.get('/reset', async (req, res) => {
   }
 });
 
+// Sync endpoint: /sync/:id (GET version)
+app.get('/sync/:id', async (req, res) => {
+  const userId = req.params.id;
+  const currentBlinkscore = parseInt(req.query.currentBlinkscore) || 0;
+  
+  // Better handling of currentTreeStates parsing
+  let currentTreeStates = [];
+  try {
+    if (req.query.currentTreeStates) {
+      currentTreeStates = JSON.parse(req.query.currentTreeStates);
+      if (!Array.isArray(currentTreeStates)) {
+        currentTreeStates = [];
+      }
+    }
+  } catch (parseError) {
+    currentTreeStates = [];
+  }
+
+  if (!userId || userId.trim() === '') {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    // Find user by user ID
+    const userResult = await db.get(`user:${userId}`);
+    let userData = null;
+    if (userResult && userResult.ok && userResult.value) {
+      userData = userResult.value;
+    } else if (userResult && userResult.id) {
+      userData = userResult;
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const serverBlinkscore = userData.blinkscore || 0;
+    
+    // Parse server treeStates properly
+    let serverTreeStates = [];
+    if (userData.treeStates) {
+      if (typeof userData.treeStates === 'string') {
+        try {
+          serverTreeStates = JSON.parse(userData.treeStates);
+        } catch (parseError) {
+          serverTreeStates = [];
+        }
+      } else if (Array.isArray(userData.treeStates)) {
+        serverTreeStates = userData.treeStates;
+      }
+    }
+
+    // Check if there are any differences
+    const blinkscoreChanged = serverBlinkscore !== currentBlinkscore;
+    // Sort arrays before comparison to handle order differences
+    const sortedServerStates = [...serverTreeStates].sort((a, b) => a - b);
+    const sortedCurrentStates = [...currentTreeStates].sort((a, b) => a - b);
+    const treeStatesChanged = JSON.stringify(sortedServerStates) !== JSON.stringify(sortedCurrentStates);
+
+    // Always return the server state when there are changes
+    if (blinkscoreChanged || treeStatesChanged) {
+      res.status(200).json({
+        changed: true,
+        blinkscore: serverBlinkscore,
+        treeStates: serverTreeStates
+      });
+    } else {
+      res.status(200).json({
+        changed: false,
+        blinkscore: serverBlinkscore,
+        treeStates: serverTreeStates
+      });
+    }
+  } catch (error) {
+    console.error('Error syncing user data:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
 // Start server
-httpServer.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
-  console.log(`WebSocket server ready for connections`);
 });
