@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" href="images/gnome.jpg">
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
-<body style="text-align: center;">
+<body>
   <div id="username-modal" style="display: none;">
     <div id="username-modal-content">
       <p>Enter a username:</p>
@@ -22,23 +22,25 @@
     <div id="qr-reader"></div>
     <button id="qr-scanner-cancel">Cancel</button>
   </div>
-  <div id="game-container">
-    <div class="field">
-      <div class="plot" data-index="0"></div>
-      <div class="plot" data-index="1"></div>
-      <div class="plot" data-index="2"></div>
-      <div class="plot" data-index="3"></div>
-      <div class="plot" data-index="4"></div>
-      <div class="plot" data-index="5"></div>
+  <div id="main-container">
+    <div id="game-container">
+      <div class="field">
+        <div class="plot" data-index="0"></div>
+        <div class="plot" data-index="1"></div>
+        <div class="plot" data-index="2"></div>
+        <div class="plot" data-index="3"></div>
+        <div class="plot" data-index="4"></div>
+        <div class="plot" data-index="5"></div>
+      </div>
     </div>
+    <div id="blink-stats" class="tooltip">
+      All Time: <span id="blink-count">0</span> | High Score: <span id="high-score">Soon™</span>
+      <span id="username-tooltip" class="tooltiptext"></span>
+    </div>
+    <button id="reset-button">Reset Trees</button>
+    <button onclick="exportfunc()">Export Account</button>
   </div>
   <div id="leaderboard"></div>
-  <div id="blink-stats" class="tooltip">
-    All Time: <span id="blink-count">0</span> | High Score: <span id="high-score">Soon™</span>
-    <span id="username-tooltip" class="tooltiptext"></span>
-  </div>
-  <button id="reset-button">Reset Trees</button>
-  <button onclick="exportfunc()">Export Account</button>
   <div id="countdown-overlay">
     <div class="countdown-text" id="countdown-text"></div>
   </div>
