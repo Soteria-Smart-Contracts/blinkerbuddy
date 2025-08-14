@@ -236,6 +236,7 @@ function stopSirenSound() {
 treeStates = []; // Initialize as empty array
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateLeaderboard();
     const urlParams = new URLSearchParams(window.location.search);
     const importId = urlParams.get('id'); // Check if there's an 'id' parameter in the URL
 
@@ -849,6 +850,9 @@ function syncWithServer() {
     .catch(error => {
         console.error('Error syncing with server:', error);
     });
+
+    // Also update the leaderboard on sync
+    updateLeaderboard();
 }
 
 // Start sync interval when user is logged in
@@ -867,6 +871,43 @@ function stopSyncInterval() {
     if (syncInterval) {
         clearInterval(syncInterval);
         syncInterval = null;
+    }
+}
+
+async function updateLeaderboard() {
+    try {
+        const response = await fetch('https://blinkerbuddy-wedergarten.replit.app/all');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        const users = data.users;
+
+        // Sort users by blinkscore in descending order
+        users.sort((a, b) => b.blinkscore - a.blinkscore);
+
+        // Get the top 3 users
+        const top3 = users.slice(0, 3);
+
+        // Create the leaderboard HTML
+        let leaderboardHTML = '<h3>Top 3 Blinkers:</h3>';
+        if (top3.length > 0) {
+            leaderboardHTML += `<p>💎 - ${top3[0].username}</p>`;
+        }
+        if (top3.length > 1) {
+            leaderboardHTML += `<p>🥇 - ${top3[1].username}</p>`;
+        }
+        if (top3.length > 2) {
+            leaderboardHTML += `<p>🥈 - ${top3[2].username}</p>`;
+        }
+
+        // Display the leaderboard
+        const leaderboardDiv = document.getElementById('leaderboard');
+        leaderboardDiv.innerHTML = leaderboardHTML;
+    } catch (error) {
+        console.error('Error updating leaderboard:', error);
+        const leaderboardDiv = document.getElementById('leaderboard');
+        leaderboardDiv.innerHTML = '<h3>Leaderboard</h3><p>Could not load leaderboard.</p>';
     }
 }
 
