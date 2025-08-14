@@ -892,13 +892,13 @@ async function updateLeaderboard() {
         // Create the leaderboard HTML
         let leaderboardHTML = '<h3>Top 3 Blinkers:</h3>';
         if (top3.length > 0) {
-            leaderboardHTML += `<p>💎 - ${top3[0].username}</p>`;
+            leaderboardHTML += `<p>💎 - ${top3[0].username} (${top3[0].blinkscore})</p>`;
         }
         if (top3.length > 1) {
-            leaderboardHTML += `<p>🥇 - ${top3[1].username}</p>`;
+            leaderboardHTML += `<p>🥇 - ${top3[1].username} (${top3[1].blinkscore})</p>`;
         }
         if (top3.length > 2) {
-            leaderboardHTML += `<p>🥈 - ${top3[2].username}</p>`;
+            leaderboardHTML += `<p>🥈 - ${top3[2].username} (${top3[2].blinkscore})</p>`;
         }
 
         // Display the leaderboard

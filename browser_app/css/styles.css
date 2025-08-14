@@ -244,3 +244,22 @@ body {
   border-radius: 5px;
   cursor: pointer;
 }
+
+#leaderboard {
+  background-color: black;
+  color: white;
+  font-weight: bold;
+  padding: 10px;
+  margin-top: 20px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+#leaderboard h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
+#leaderboard p {
+  margin: 5px 0;
+}
