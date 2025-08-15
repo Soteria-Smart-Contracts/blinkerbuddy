@@ -890,7 +890,7 @@ async function updateLeaderboard() {
         const top3 = users.slice(0, 3);
 
         // Create the leaderboard HTML
-        let leaderboardHTML = '<h3>Top 3 Blinkers:</h3>';
+        let leaderboardHTML = '<h3>🔆 BlinkBoard 🔆</h3>';
         if (top3.length > 0) {
             leaderboardHTML += `<p>💎 - ${top3[0].username} (${top3[0].blinkscore})</p>`;
         }
