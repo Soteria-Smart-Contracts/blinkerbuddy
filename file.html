@@ -1,146 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>ETC Museum – treasury breaks immutability</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  body{margin:0;overflow:hidden;font-family:monospace;background:#000;color:#fff}
-  #hud{position:absolute;top:10px;left:10px;pointer-events:none}
-  #voteBtn{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);padding:12px 24px;font-size:18px;background:#c00;color:#fff;border:none;border-radius:4px;cursor:pointer;display:none;pointer-events:all}
-  #voteBtn:hover{background:#f00}
-</style>
-</head>
-<body>
-<div id="hud">
-  <h2 id="title">IMMUTABLE MUSEUM</h2>
-  <p id="subtitle">Drag the cube → treasury vote appears → press it → watch the promise break.</p>
-</div>
-<button id="voteBtn">TREASURY VOTE – MOVE EXHIBIT</button>
-
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js';
-
-/* ---- basic setup ---- */
-const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x111111, 10, 60);
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 100);
-camera.position.set(0, 4, 10);
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setSize(innerWidth, innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-
-/* ---- lighting ---- */
-const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(ambient);
-const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-dir.position.set(5, 10, 7);
-scene.add(dir);
-
-/* ---- floor ---- */
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(40, 40),
-  new THREE.MeshStandardMaterial({color: 0x222222, roughness: 0.8})
-);
-floor.rotation.x = -Math.PI / 2;
-scene.add(floor);
-
-/* ---- “museum” walls ---- */
-const wallMat = new THREE.MeshStandardMaterial({color: 0x404040, roughness: 1});
-[-10, 10].forEach(z => {
-  const w = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 0.5), wallMat);
-  w.position.set(0, 5, z);
-  scene.add(w);
-});
-[-10, 10].forEach(x => {
-  const w = new THREE.Mesh(new THREE.BoxGeometry(0.5, 10, 40), wallMat);
-  w.position.set(x, 5, 0);
-  scene.add(w);
-});
-
-/* ---- the sacred exhibit (DAO cube) ---- */
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(2, 2, 2),
-  new THREE.MeshStandardMaterial({color: 0x00d2ff, emissive: 0x00d2ff, emissiveIntensity: 0.4})
-);
-cube.position.y = 1.5;
-cube.userData.original = cube.position.clone();
-scene.add(cube);
-
-/* ---- draggable interaction ---- */
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-let dragging = false;
-let treasuryUsed = false;
-
-window.addEventListener('pointerdown', e => {
-  mouse.x = (e.clientX/innerWidth)*2 - 1;
-  mouse.y = -(e.clientY/innerHeight)*2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObject(cube);
-  if (intersects.length) {
-    dragging = true;
-    controls.enabled = false;
-  }
-});
-window.addEventListener('pointerup', () => {
-  dragging = false;
-  controls.enabled = true;
-});
-window.addEventListener('pointermove', e => {
-  if (!dragging) return;
-  mouse.x = (e.clientX/innerWidth)*2 - 1;
-  mouse.y = -(e.clientY/innerHeight)*2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.5);
-  const point = new THREE.Vector3();
-  raycaster.ray.intersectPlane(plane, point);
-  cube.position.set(point.x, 1.5, point.z);
-  if (!treasuryUsed && cube.position.distanceTo(cube.userData.original) > 1) {
-    document.getElementById('voteBtn').style.display = 'block';
-  }
-});
-
-/* ---- treasury button action ---- */
-document.getElementById('voteBtn').addEventListener('click', () => {
-  treasuryUsed = true;
-  document.getElementById('voteBtn').style.display = 'none';
-  document.getElementById('title').textContent = 'MUTABLE MUSEUM';
-  document.getElementById('subtitle').textContent = 'Immutability was only a social contract—until we installed a treasury.';
-  ambient.color.set(0xff0000);
-  scene.fog.color.set(0x440000);
-  /* crack the walls */
-  scene.children.filter(o => o.material === wallMat).forEach(w => {
-    w.material = w.material.clone();
-    w.material.color.set(0x661111);
-  });
-  /* drag cube off pedestal */
-  const target = new THREE.Vector3(6, 1.5, 6);
-  const start = cube.position.clone();
-  let t = 0;
-  const anim = () => {
-    t += 0.02;
-    cube.position.lerpVectors(start, target, Math.min(t, 1));
-    if (t < 1) requestAnimationFrame(anim);
-  };
-  anim();
-});
-
-/* ---- render loop ---- */
-renderer.setAnimationLoop(() => {
-  controls.update();
-  renderer.render(scene, camera);
-});
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-</script>
-</body>
-</html>
+    /* ---------- FIXED IMPORTS ---------- */
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js';
+    
+    /* ---------- YOUR CODE (unchanged) ---------- */
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x111111, 10, 60);
+    const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 100);
+    camera.position.set(0, 4, 10);
+    const renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize(innerWidth, innerHeight);
+    document.body.appendChild(renderer.domElement);
+    
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(5, 10, 7);
+    scene.add(dir);
+    
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({color: 0x222222, roughness: 0.8})
+    );
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+    
+    const wallMat = new THREE.MeshStandardMaterial({color: 0x404040, roughness: 1});
+    [-10, 10].forEach(z => {
+      const w = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 0.5), wallMat);
+      w.position.set(0, 5, z);
+      scene.add(w);
+    });
+    [-10, 10].forEach(x => {
+      const w = new THREE.Mesh(new THREE.BoxGeometry(0.5, 10, 40), wallMat);
+      w.position.set(x, 5, 0);
+      scene.add(w);
+    });
+    
+    const cube = new THREE.Mesh(
+      new THREE.BoxGeometry(2, 2, 2),
+      new THREE.MeshStandardMaterial({color: 0x00d2ff, emissive: 0x00d2ff, emissiveIntensity: 0.4})
+    );
+    cube.position.y = 1.5;
+    cube.userData.original = cube.position.clone();
+    scene.add(cube);
+    
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let dragging = false;
+    let treasuryUsed = false;
+    
+    window.addEventListener('pointerdown', e => {
+      mouse.x = (e.clientX/innerWidth)*2 - 1;
+      mouse.y = -(e.clientY/innerHeight)*2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(cube);
+      if (intersects.length) {
+        dragging = true;
+        controls.enabled = false;
+      }
+    });
+    window.addEventListener('pointerup', () => {
+      dragging = false;
+      controls.enabled = true;
+    });
+    window.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      mouse.x = (e.clientX/innerWidth)*2 - 1;
+      mouse.y = -(e.clientY/innerHeight)*2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.5);
+      const point = new THREE.Vector3();
+      raycaster.ray.intersectPlane(plane, point);
+      cube.position.set(point.x, 1.5, point.z);
+      if (!treasuryUsed && cube.position.distanceTo(cube.userData.original) > 1) {
+        document.getElementById('voteBtn').style.display = 'block';
+      }
+    });
+    
+    document.getElementById('voteBtn').addEventListener('click', () => {
+      treasuryUsed = true;
+      document.getElementById('voteBtn').style.display = 'none';
+      document.getElementById('title').textContent = 'MUTABLE MUSEUM';
+      document.getElementById('subtitle').textContent = 'Immutability was only a social contract—until we installed a treasury.';
+      ambient.color.set(0xff0000);
+      scene.fog.color.set(0x440000);
+      scene.children.filter(o => o.material === wallMat).forEach(w => {
+        w.material = w.material.clone();
+        w.material.color.set(0x661111);
+      });
+      const target = new THREE.Vector3(6, 1.5, 6);
+      const start = cube.position.clone();
+      let t = 0;
+      const anim = () => {
+        t += 0.02;
+        cube.position.lerpVectors(start, target, Math.min(t, 1));
+        if (t < 1) requestAnimationFrame(anim);
+      };
+      anim();
+    });
+    
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+    window.addEventListener('resize', () => {
+      camera.aspect = innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+    </script>
