@@ -7,21 +7,8 @@
   <link rel="stylesheet" href="css/styles.css">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="apple-touch-icon" href="images/gnome.jpg">
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
-  <div id="username-modal" style="display: none;">
-    <div id="username-modal-content">
-      <p>Enter a username:</p>
-      <input type="text" id="username-input" maxlength="20">
-      <button id="username-submit">Submit</button>
-      <button id="import-account-button">Import Account</button>
-    </div>
-  </div>
-  <div id="qr-scanner-container" style="display: none;">
-    <div id="qr-reader"></div>
-    <button id="qr-scanner-cancel">Cancel</button>
-  </div>
   <div id="main-container">
     <div id="game-container">
       <div class="field">
@@ -34,13 +21,10 @@
       </div>
     </div>
     <div id="blink-stats" class="tooltip">
-      All Time: <span id="blink-count">0</span> | High Score: <span id="high-score">Soon™</span>
-      <span id="username-tooltip" class="tooltiptext"></span>
+      Today: <span id="blink-count">0</span> | High Score: <span id="high-score">0</span>
     </div>
     <button id="reset-button">Reset Trees</button>
-    <button onclick="exportfunc()">Export Account</button>
   </div>
-  <div id="leaderboard"></div>
   <div id="countdown-overlay">
     <div class="countdown-text" id="countdown-text"></div>
   </div>
